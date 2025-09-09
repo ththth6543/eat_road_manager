@@ -39,6 +39,8 @@ dependencies:
   flutter_naver_map: ^1.4.1+1
   permission_handler: ^12.0.1
   http: ^1.5.0
+  geolocator: ^14.0.2
+  google_sign_in: ^7.1.1
 
 dev_dependencies:
   flutter_test:
