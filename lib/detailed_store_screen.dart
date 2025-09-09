@@ -13,7 +13,7 @@ class _StoreScreenState extends State<StoreScreen> {
     return Scaffold(
       appBar: AppBar(title: Text("가게 샘플"),),
       body: Center(
-        child: Text("가게 샘플 asdf"),
+        child: Text("가게 샘플 asdfasdf"),
       ),
     );
   }
