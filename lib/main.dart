@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:ffi';
 
 import 'package:eat_road_manager/create_store_marker.dart';
 import 'package:flutter/material.dart';
-import 'package:eat_road_manager/create_menu.dart';
+import 'package:eat_road_manager/create_store/create_store_overview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'main_drawer.dart';
@@ -20,8 +21,8 @@ void main() async {
           debugPrint("사용량 초과 (message: $message)");
           break;
         case NUnauthorizedClientException() ||
-            NClientUnspecifiedException() ||
-            NAuthFailedException():
+        NClientUnspecifiedException() ||
+        NAuthFailedException():
           debugPrint("인증 실패: $ex");
           break;
       }
@@ -31,7 +32,7 @@ void main() async {
   await Supabase.initialize(
     url: 'https://xvxyrdqnidcygepvnmjl.supabase.co',
     anonKey:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eHlyZHFuaWRjeWdlcHZubWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDYzMjYsImV4cCI6MjA3MjQ4MjMyNn0.Sz8ZKu_oCrocfd6nRo9RNDtljpTKLwXmMvsNNZ3vj-s",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eHlyZHFuaWRjeWdlcHZubWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDYzMjYsImV4cCI6MjA3MjQ4MjMyNn0.Sz8ZKu_oCrocfd6nRo9RNDtljpTKLwXmMvsNNZ3vj-s",
   );
 
   runApp(const MyApp());
@@ -79,11 +80,68 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  // 중복 클릭을 방지
+  bool _isCreatingStore = false;
+
+  Future<void> _navigateToCreateStore() async {
+    // 이미 실행 중이면 중복 실행 방지
+    if (_isCreatingStore) return;
+
+    setState(() {
+      _isCreatingStore = true;
+    });
+
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('로그인 해주세요');
+
+      // 현재 유저가 만들다 만 가게 (status가 'DRAFT' 일 경우)가 있는지 확인
+      final List<dynamic> drafts = await supabase
+          .from('stores')
+          .select('id')
+          .eq('owner_id', userId)
+          .eq('status', 'DRAFT');
+
+      String storeId;
+
+      //임시저장 가게가 있으면 그 id를 사용
+      if (drafts.isNotEmpty) {
+        storeId = drafts.first['id'].toString();
+        debugPrint('현재 작성중인 가게로 이동: $storeId');
+      } else {
+        // 임시저장 가게가 없으면 새로 생성
+        final newData = await supabase
+            .from('stores')
+            .insert({'owner_id': userId, 'name': '임시 가게', 'status': 'DRAFT'})
+            .select('id')
+            .single();
+        storeId = newData['id'].toString();
+        debugPrint('새로운 가게 생성: $storeId');
+      }
+
+      if (mounted) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateStoreOverview(storeId: storeId,)));
+      }
+    } catch (e) {
+      debugPrint('가게 생성 오류: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("오류가 발생 했습니다: $e")));
+      }
+    } finally {
+      setState(() {
+        _isCreatingStore = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme
+            .of(context)
+            .colorScheme
+            .inversePrimary,
         title: Text("사장님 용"),
       ),
       endDrawer: MainDrawer(),
@@ -92,12 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateMenu()),
-                );
-              },
+              onTap: _navigateToCreateStore,
               child: Container(
                 width: 200,
                 height: 200,
