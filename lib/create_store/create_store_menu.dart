@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:collection/collection.dart';
 import 'package:eat_road_manager/create_store/create_store_others.dart';
 
 final supabase = Supabase.instance.client;
