@@ -15,7 +15,8 @@ class CreateStoreOverview extends StatefulWidget {
   _CreateStoreOverviewState createState() => _CreateStoreOverviewState();
 }
 
-class _CreateStoreOverviewState extends State<CreateStoreOverview> {
+class _CreateStoreOverviewState extends State<CreateStoreOverview>
+    with WidgetsBindingObserver {
   String? _storeId;
   List<String> _imageUrls = [];
   final _imagePicker = ImagePicker();
@@ -23,14 +24,36 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
   bool _isUploading = false;
   bool _isLoading = true;
 
+  // 키보드 가시성 변수
+  bool _isKeyboardVisible = false;
+
   //삭제 중인 이미지의 인덱스를 저장
   int? _deletingIndex;
 
   @override
   void initState() {
     super.initState();
+    // 리스너 등록
+    WidgetsBinding.instance.addObserver(this);
     // 화면이 시작될 때 기존에 업로드 해둔 데이터를 로드
     _loadStoreData();
+  }
+
+  @override
+  void dispose() {
+    // 리스너 할당 해제
+    WidgetsBinding.instance.removeObserver(this);
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  // 키보드 상태에 변경 감지 함수
+  @override
+  void didChangeMetrics() {
+    final bottomInsets = View.of(context).viewInsets.bottom;
+    setState(() {
+      _isKeyboardVisible = bottomInsets > 0;
+    });
   }
 
   Future<void> _loadStoreData() async {
@@ -126,13 +149,15 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
         final fileName = file.name;
         final folderPath = '$userId/${widget.storeId}';
         final filePath = '$folderPath/$fileName';
-        
+
         try {
           final uploadFile = File(file.path);
           await supabase.storage.from('stores').upload(filePath, uploadFile);
 
           // 업로드 성공시, 중복되는 파일이 없으면 URL을 가져와 목록에 추가
-          final imageUrl = supabase.storage.from('stores').getPublicUrl(filePath);
+          final imageUrl = supabase.storage
+              .from('stores')
+              .getPublicUrl(filePath);
           setState(() {
             _imageUrls.add(imageUrl);
           });
@@ -141,11 +166,12 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
           if (e.statusCode == '409') {
             debugPrint('$fileName이 이미 존재합니다.');
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$fileName이 이미 존재합니다.')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('$fileName이 이미 존재합니다.')));
             }
-          } else { //다른 에러는 아래 catch에서 해결
+          } else {
+            //다른 에러는 아래 catch에서 해결
             rethrow;
           }
         }
@@ -185,7 +211,9 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => CreateStoreMenu()),
+          MaterialPageRoute(
+            builder: (context) => CreateStoreMenu(storeId: widget.storeId),
+          ),
         );
       }
     } catch (e) {
@@ -226,7 +254,13 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
           : Stack(
               children: [
                 SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  // 키보드가 보일 때는 하단 패딩을 없애고, 보이지 않을 때는 버튼 높이 만큼 패딩을 줌.
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16,
+                    16,
+                    _isKeyboardVisible ? 16 : 100,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -328,24 +362,33 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview> {
                     ],
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    color: Colors.transparent,
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 16),
-                    child: ElevatedButton(
-                      onPressed: (_storeId == null || _isLoading)
-                          ? null
-                          : _saveAndContinue,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
+                if (!_isKeyboardVisible)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Colors.transparent,
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        top: 10,
+                        bottom: 16,
                       ),
-                      child: const Text('저장 후 계속하기', style: TextStyle(color: Colors.blueAccent),),
+                      child: ElevatedButton(
+                        onPressed: (_storeId == null || _isLoading)
+                            ? null
+                            : _saveAndContinue,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: const Text(
+                          '저장 후 다음 단계로',
+                          style: TextStyle(color: Colors.blueAccent),
+                        ),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
     );
