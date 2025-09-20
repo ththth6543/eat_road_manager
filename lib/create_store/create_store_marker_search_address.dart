@@ -2,18 +2,64 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-// A model to hold the parsed address data
+// Juso 모델: API 응답을 파싱하고 Map으로 변환하는 기능을 포함
 class Juso {
-  final String roadAddr;
-  final String jibunAddr;
+  final String roadAddr; // 전체 도로명 주소
+  final String jibunAddr; // 지번 주소
+  // final String admCd; // 행정구역코드
+  // final String rnMgtSn; // 도로명코드
+  // final String udrtYn; // 지하여부
+  // final String buldMnnm; // 건물본번
+  // final String buldSlno; // 건물부번
+  final String siNm; // 시도명
+  final String sggNm; // 시군구명
+  final String emdNm; // 읍면동명
+  final String liNm; // 법정리명
 
-  Juso({required this.roadAddr, required this.jibunAddr});
+  Juso({
+    required this.roadAddr,
+    required this.jibunAddr,
+    // required this.admCd,
+    // required this.rnMgtSn,
+    // required this.udrtYn,
+    // required this.buldMnnm,
+    // required this.buldSlno,
+    required this.siNm,
+    required this.sggNm,
+    required this.emdNm,
+    required this.liNm,
+  });
 
   factory Juso.fromJson(Map<String, dynamic> json) {
     return Juso(
       roadAddr: json['roadAddr'] ?? '',
       jibunAddr: json['jibunAddr'] ?? '',
+      // admCd: json['admCd'] ?? '',
+      // rnMgtSn: json['rnMgtSn'] ?? '',
+      // udrtYn: json['udrtYn'] ?? '',
+      // buldMnnm: json['buldMnnm'] ?? '',
+      // buldSlno: json['buldSlno'] ?? '',
+      siNm: json['siNm'] ?? '',
+      sggNm: json['sggNm'] ?? '',
+      emdNm: json['emdNm'] ?? '',
+      liNm: json['liNm'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'roadAddr': roadAddr,
+      'jibunAddr': jibunAddr,
+      //'admCd': admCd,
+      //'rnMgtSn': rnMgtSn,
+      //'udrtYn': udrtYn,
+      //'buldMnnm': buldMnnm,
+      //'buldSlno': buldSlno,
+      'siNm': siNm,
+      'sggNm': sggNm,
+      'emdNm': emdNm,
+      'liNm': liNm,
+    };
   }
 }
 
@@ -27,7 +73,7 @@ class AddressSearchView extends StatefulWidget {
 class _AddressSearchViewState extends State<AddressSearchView> {
   final _searchController = TextEditingController();
   final _detailAddressController = TextEditingController();
-  
+
   List<Juso> _results = [];
   bool _isLoading = false;
   bool _hasSearched = false;
@@ -59,11 +105,9 @@ class _AddressSearchViewState extends State<AddressSearchView> {
           });
         }
       } else {
-        // Handle API error
         debugPrint('API call failed with status: ${response.statusCode}');
       }
     } catch (e) {
-      // Handle network error
       debugPrint('An error occurred: $e');
     } finally {
       setState(() {
@@ -150,8 +194,10 @@ class _AddressSearchViewState extends State<AddressSearchView> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                final fullAddress = '${_selectedJuso!.roadAddr} ${_detailAddressController.text}';
-                Navigator.pop(context, fullAddress.trim());
+                final addressData = _selectedJuso!.toJson();
+                addressData['detailAddress'] = _detailAddressController.text.trim();
+                // 전체 주소 데이터를 Map 형태로 반환
+                Navigator.pop(context, addressData);
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
