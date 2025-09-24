@@ -8,9 +8,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:eat_road_manager/create_store/create_store_marker_search_address.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // 3단계 워크플로우를 관리하기 위한 열거형
 enum MarkerCreationStep { initial, fineTuning, confirmed }
+
+final supabase = Supabase.instance.client;
 
 class CreateStoreMarker extends StatefulWidget {
   final String storeId;
@@ -31,6 +34,7 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
   Map<String, dynamic>? _initialAddressData; // 주소 검색 결과 (도로명, 지번, 행정구역 등)
   NLatLng? _initialCoordinates; // 주소 검색으로 찾은 초기 좌표
   NLatLng? _finalCoordinates; // 사용자가 조정한 최종 좌표
+  bool _isLoading = false;
 
   // Permissions
   bool _hasPermission = false;
@@ -85,7 +89,8 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
         // 지도에 초기 마커 표시 및 카메라 이동
         _mapController.clearOverlays();
         _mapController.addOverlay(NMarker(id: 'initial', position: coords));
-        _mapController.updateCamera(NCameraUpdate.withParams(target: coords, zoom: 16));
+        _mapController.updateCamera(
+            NCameraUpdate.withParams(target: coords, zoom: 16));
       }
     }
   }
@@ -95,7 +100,8 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
     final String clientId = 'vbjkz22vte';
     final String clientSecret = 'FkRp5jplV4VLhEnzt0em2gm3pYGPLIf8DcduG5XA';
     final String url =
-        'https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${Uri.encodeComponent(address)}';
+        'https://maps.apigw.ntruss.com/map-geocode/v2/geocode?query=${Uri
+        .encodeComponent(address)}';
 
     try {
       final response = await http.get(
@@ -118,7 +124,8 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
           return null;
         }
       } else {
-        debugPrint('Geocoding API call failed with status: ${response.statusCode}');
+        debugPrint(
+            'Geocoding API call failed with status: ${response.statusCode}');
         return null;
       }
     } catch (e) {
@@ -143,12 +150,47 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
   }
 
   // Step 3: 최종 저장
-  void _saveStoreLocation() {
+  void _saveStoreLocation() async {
     // 여기서 _initialAddressData와 _finalCoordinates를 사용하여 DB에 저장
     debugPrint("--- 최종 저장 데이터 ---");
     debugPrint("주소 정보: $_initialAddressData");
     debugPrint("최종 좌표: $_finalCoordinates");
     // ... 저장 로직 ...
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await supabase
+          .from('stores')
+          .update({
+        'latitude': _finalCoordinates!.latitude,
+        'longitude': _finalCoordinates!.longitude,
+        'roadAddr': _initialAddressData!['roadAddr'],
+        'jibunAddr': _initialAddressData!['jibunAddr'],
+        //null 가능
+          'detailAddr': _initialAddressData?['detailAddr'],
+        'siNm': _initialAddressData?['siNm'],
+        'sggNm': _initialAddressData?['sggNm'],
+        'emdNm': _initialAddressData?['emdNm'],
+        'liNm': _initialAddressData?['liNm'],
+      })
+          .eq('id', widget.storeId);
+
+      // 다음 단계로 이동(store_Id를 전달)
+      if (mounted) {
+        //Navigator.push(context, route)
+      }
+    } catch (e) {
+      debugPrint('가게 좌표 및 주소 저장 오류: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -158,19 +200,19 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
         title: const Text('가게 위치 등록'),
         leading: _step != MarkerCreationStep.initial
             ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() {
-                    // 이전 단계로 돌아가기 로직
-                    if (_step == MarkerCreationStep.confirmed) {
-                      _step = MarkerCreationStep.fineTuning;
-                    } else if (_step == MarkerCreationStep.fineTuning) {
-                      _step = MarkerCreationStep.initial;
-                      _mapController.clearOverlays();
-                    }
-                  });
-                },
-              )
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              // 이전 단계로 돌아가기 로직
+              if (_step == MarkerCreationStep.confirmed) {
+                _step = MarkerCreationStep.fineTuning;
+              } else if (_step == MarkerCreationStep.fineTuning) {
+                _step = MarkerCreationStep.initial;
+                _mapController.clearOverlays();
+              }
+            });
+          },
+        )
             : null,
       ),
       body: Stack(
@@ -272,7 +314,10 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(roadAddress, style: Theme.of(context).textTheme.titleMedium),
+              Text(roadAddress, style: Theme
+                  .of(context)
+                  .textTheme
+                  .titleMedium),
               const SizedBox(height: 8),
               Text('위도: ${_finalCoordinates?.latitude.toStringAsFixed(5)}'),
               Text('경도: ${_finalCoordinates?.longitude.toStringAsFixed(5)}'),

@@ -70,9 +70,6 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
   bool _isLoading = true;
   bool _isSaving = false;
 
-  // 키보드 가시성 상태 변수
-  bool _isKeyboardVisible = false;
-
   @override
   void initState() {
     super.initState();
@@ -90,15 +87,6 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
       item.dispose();
     }
     super.dispose();
-  }
-
-  //키보드 상태 변경 감지 함수
-  @override
-  void didChangeMetrics() {
-    final bottomInsets = View.of(context).viewInsets.bottom;
-    setState(() {
-      _isKeyboardVisible = bottomInsets > 0;
-    });
   }
 
   //DB에서 기존 메뉴들을 불러와 화면에 불러옴
@@ -391,7 +379,7 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
               16,
               16,
               16,
-              _isKeyboardVisible ? 16 : 100,
+              82,
             ),
             itemCount: _menuItems.length + 1,
             itemBuilder: (context, index) {
@@ -499,35 +487,22 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
               );
             },
           ),
-
-          // 키보드가 보이지 않을 때만 하단 버튼을 렌더링합니다.
-          if (!_isKeyboardVisible)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.transparent,
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveAllMenus,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
-                          ),
-                        )
-                      : const Text('전체 메뉴 저장 후 다음 단계로'),
-                ),
-              ),
-            ),
         ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.90,
+        height: 50,
+        child: ElevatedButton(
+          onPressed: _isSaving ? null : _saveAllMenus,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: const Text('메뉴 저장 후 다음 단계로', style: TextStyle(fontSize: 15, color: Colors.white)),
+        ),
       ),
     );
   }

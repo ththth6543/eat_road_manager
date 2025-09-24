@@ -21,11 +21,9 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
   List<String> _imageUrls = [];
   final _imagePicker = ImagePicker();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _storeNameController = TextEditingController();
   bool _isUploading = false;
   bool _isLoading = true;
-
-  // 키보드 가시성 변수
-  bool _isKeyboardVisible = false;
 
   //삭제 중인 이미지의 인덱스를 저장
   int? _deletingIndex;
@@ -44,16 +42,8 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
     // 리스너 할당 해제
     WidgetsBinding.instance.removeObserver(this);
     _descriptionController.dispose();
+    _storeNameController.dispose();
     super.dispose();
-  }
-
-  // 키보드 상태에 변경 감지 함수
-  @override
-  void didChangeMetrics() {
-    final bottomInsets = View.of(context).viewInsets.bottom;
-    setState(() {
-      _isKeyboardVisible = bottomInsets > 0;
-    });
   }
 
   Future<void> _loadStoreData() async {
@@ -62,22 +52,25 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
       // stores 테이블에 해당 id의 스토어 데이터를 가져옴
       final data = await supabase
           .from('stores')
-          .select('description, image_urls')
+          .select('description, image_urls, name')
           .eq('id', widget.storeId)
           .single();
 
       if (data['description'] != null) {
         _descriptionController.text = data['description'];
       }
+      if (data['name'] != null) {
+        _storeNameController.text = data['name'];
+      }
       if (data['image_urls'] != null) {
         _imageUrls = List<String>.from(data['image_urls']);
       }
     } catch (e) {
-      debugPrint('새로운 가게 생성 오류: $e');
+      debugPrint('가게 불러오는데 오류: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('가게 생성에 실패했습니다: $e')));
+        ).showSnackBar(SnackBar(content: Text('가게 정보를 가져오는데 실패했습니다: $e')));
         Navigator.of(context).pop();
       }
     } finally {
@@ -202,6 +195,7 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
       await supabase
           .from('stores')
           .update({
+            'name': _storeNameController.text,
             'description': _descriptionController.text,
             'image_urls': _imageUrls,
           })
@@ -227,22 +221,6 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
     }
   }
 
-  // DB 테이블에 올려보기
-  Future<void> uploadMenu(String introduction, String userID) async {
-    final supabase = Supabase.instance.client;
-
-    try {
-      final response = await supabase.from('menu').insert({
-        'userID': userID,
-        'introduction': introduction,
-      });
-
-      print("✅ 메뉴 업로드 성공: $response");
-    } catch (e) {
-      print("❌ 메뉴 업로드 실패: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -259,11 +237,29 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
                     16,
                     16,
                     16,
-                    _isKeyboardVisible ? 16 : 100,
+                    82,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Text(
+                        '가게 이름',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _storeNameController,
+                        maxLines: 1,
+                        decoration: const InputDecoration(
+                          hintText: '가게 이름',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
                       const Text(
                         '가게 소개',
                         style: TextStyle(
@@ -274,13 +270,14 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _descriptionController,
-                        maxLines: 10,
+                        maxLines: null,
                         decoration: const InputDecoration(
                           hintText: '가게에 대한 간단한 소개 부탁 드립니다!',
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 24),
+
                       const Text(
                         '인테리어, 내부 전경',
                         style: TextStyle(
@@ -362,35 +359,23 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
                     ],
                   ),
                 ),
-                if (!_isKeyboardVisible)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      color: Colors.transparent,
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        top: 10,
-                        bottom: 16,
-                      ),
-                      child: ElevatedButton(
-                        onPressed: (_storeId == null || _isLoading)
-                            ? null
-                            : _saveAndContinue,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                        ),
-                        child: const Text(
-                          '저장 후 다음 단계로',
-                          style: TextStyle(color: Colors.blueAccent),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.90,
+        height: 50,
+        child: ElevatedButton(
+          onPressed: (_storeId == null || _isLoading) ? null : _saveAndContinue,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: const Text('저장 후 다음 단계로', style: TextStyle(fontSize: 15, color: Colors.white)),
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class StoreScreen extends StatefulWidget {
-  const StoreScreen({super.key});
+  final String storeId;
+
+  const StoreScreen({super.key, required this.storeId});
 
   @override
   State<StoreScreen> createState() => _StoreScreenState();

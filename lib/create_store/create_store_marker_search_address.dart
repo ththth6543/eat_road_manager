@@ -195,7 +195,7 @@ class _AddressSearchViewState extends State<AddressSearchView> {
             child: ElevatedButton(
               onPressed: () {
                 final addressData = _selectedJuso!.toJson();
-                addressData['detailAddress'] = _detailAddressController.text.trim();
+                addressData['detailAddr'] = _detailAddressController.text.trim();
                 // 전체 주소 데이터를 Map 형태로 반환
                 Navigator.pop(context, addressData);
               },
