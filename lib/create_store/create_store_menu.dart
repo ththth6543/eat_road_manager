@@ -469,7 +469,7 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
                         decoration: const InputDecoration(
                           labelText: '메뉴 설명(선택사항)',
                         ),
-                        maxLines: 5,
+                        maxLines: null,
                       ),
                       Align(
                         alignment: Alignment.centerRight,
@@ -501,7 +501,10 @@ class _CreateStoreMenuState extends State<CreateStoreMenu>
               borderRadius: BorderRadius.circular(15),
             ),
           ),
-          child: const Text('메뉴 저장 후 다음 단계로', style: TextStyle(fontSize: 15, color: Colors.white)),
+          child: const Text(
+            '메뉴 저장 후 다음 단계로',
+            style: TextStyle(fontSize: 15, color: Colors.white),
+          ),
         ),
       ),
     );

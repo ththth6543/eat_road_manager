@@ -120,7 +120,7 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
       );
 
       marker.setOnTapListener((NMarker tappedMarker) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => StoreScreen()));
+        //Navigator.push(context, MaterialPageRoute(builder: (context) => StoreScreen()));
       });
 
       _mapController.addOverlay(marker); // 지도에 마커를 추가

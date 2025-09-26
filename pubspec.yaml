@@ -43,6 +43,8 @@ dependencies:
   google_sign_in: ^7.1.1
   collection: ^1.19.1
   webview_flutter: ^4.13.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

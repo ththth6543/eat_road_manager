@@ -8,6 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'main_drawer.dart';
 import 'store_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'create_store/create_store_others.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,26 +50,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MaterialApp(
-        // streambuilder를 사용하여 인증 상태에 따라 첫 화면을 결정
-        home: StreamBuilder<AuthState>(
-          stream: supabase.auth.onAuthStateChange,
-          builder: (context, snapshot) {
-            // 스트림에서 첫 데이터를 기다리는 동안 띄울 로딩화면
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-            // 데이터가 있고 세션이 null이면 로그인 상태
-            if (snapshot.hasData && snapshot.data!.session != null) {
-              return const MyHomePage();
-            } else {
-              // 로그아웃 상태일때 띄울 화면
-              return const MyHomePage();
-            }
-          },
-        ),
+      // 한글 및 기타 언어 설정을 위한 localizationsDelegates 추가
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // 지원할 언어 설정 (여기서는 한국어와 영어)
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
+      // 앱의 기본 로케일을 한국어로 설정
+      locale: const Locale('ko'),
+      // streambuilder를 사용하여 인증 상태에 따라 첫 화면을 결정
+      home: StreamBuilder<AuthState>(
+        stream: supabase.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          // 스트림에서 첫 데이터를 기다리는 동안 띄울 로딩화면
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          // 데이터가 있고 세션이 null이면 로그인 상태
+          if (snapshot.hasData && snapshot.data!.session != null) {
+            return const MyHomePage();
+          } else {
+            // 로그아웃 상태일때 띄울 화면
+            return const MyHomePage();
+          }
+        },
       ),
     );
   }
@@ -153,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onTap: _navigateToCreateStore,
               child: Container(
                 width: 200,
-                height: 200,
+                height: 100,
                 color: Colors.amber,
                 child: Text("가게 생성"),
               ),
@@ -169,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: Container(
                 width: 200,
-                height: 200,
+                height: 100,
                 color: Colors.green,
                 child: Text("가게 마커"),
               ),
@@ -187,6 +201,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 200,
                 height: 200,
                 color: Colors.blueAccent,
+                child: Text("가게 마커"),
+              ),
+            ),
+
+            SizedBox(height: 20),
+            //지도
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateStoreOthers(storeId: '20')),
+                );
+              },
+              child: Container(
+                width: 200,
+                height: 200,
+                color: Colors.deepPurpleAccent,
                 child: Text("가게 마커"),
               ),
             ),

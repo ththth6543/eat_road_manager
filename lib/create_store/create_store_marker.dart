@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:eat_road_manager/create_store/create_store_marker_search_address.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:eat_road_manager/create_store/create_store_others.dart';
 
 // 3단계 워크플로우를 관리하기 위한 열거형
 enum MarkerCreationStep { initial, fineTuning, confirmed }
@@ -39,10 +40,14 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
   // Permissions
   bool _hasPermission = false;
 
+  // 가게 이름
+  String _storeName = '';
+
   @override
   void initState() {
     super.initState();
     _checkPermission();
+    _getStoreName();
   }
 
   Future<void> _checkPermission() async {
@@ -50,6 +55,23 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
     setState(() {
       _hasPermission = isGranted;
     });
+  }
+
+  // 가게 이름 가져오기
+  Future<void> _getStoreName() async {
+    try {
+      final data = await supabase
+          .from('stores')
+          .select('name')
+          .eq('id', widget.storeId);
+      if (data.isNotEmpty) {
+        setState(() {
+          _storeName = data[0]['name'];
+        });
+      }
+    } catch (e) {
+      debugPrint('가게 이름 불러오기 오류: $e');
+    }
   }
 
   Future<bool> requestLocationPermission() async {
@@ -88,7 +110,7 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
 
         // 지도에 초기 마커 표시 및 카메라 이동
         _mapController.clearOverlays();
-        _mapController.addOverlay(NMarker(id: 'initial', position: coords));
+        _mapController.addOverlay(NMarker(id: 'initial', position: coords, caption: NOverlayCaption(text: _storeName)));
         _mapController.updateCamera(
             NCameraUpdate.withParams(target: coords, zoom: 16));
       }
@@ -146,7 +168,7 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
 
     // 최종 위치에 마커 업데이트
     _mapController.clearOverlays();
-    _mapController.addOverlay(NMarker(id: 'final', position: center));
+    _mapController.addOverlay(NMarker(id: 'final', position: center, caption: NOverlayCaption(text: _storeName)));
   }
 
   // Step 3: 최종 저장
@@ -180,7 +202,8 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
 
       // 다음 단계로 이동(store_Id를 전달)
       if (mounted) {
-        //Navigator.push(context, route)
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => CreateStoreOthers(storeId: widget.storeId)));
       }
     } catch (e) {
       debugPrint('가게 좌표 및 주소 저장 오류: $e');
