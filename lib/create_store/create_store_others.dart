@@ -14,6 +14,7 @@ class CreateStoreOthers extends StatefulWidget {
 }
 
 class _CreateStoreOthersState extends State<CreateStoreOthers> {
+  final ScrollController _scrollController = ScrollController();
   final TextEditingController _openTimeController = TextEditingController();
   final TextEditingController _closeTimeController = TextEditingController();
   final TextEditingController _storePhoneNumberController =
@@ -84,6 +85,15 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
   @override
   void dispose() {
     // Controller dispose 할 것
+    _scrollController.dispose();
+    _openTimeController.dispose();
+    _closeTimeController.dispose();
+    _storePhoneNumberController.dispose();
+    _storeSNSController.dispose();
+    _storeParkingController.dispose();
+    _storeSeatsController.dispose();
+    _storeWifiIdController.dispose();
+    _storeWifiPwController.dispose();
     super.dispose();
   }
 
@@ -137,6 +147,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
       appBar: AppBar(title: Text("기타 사항들")),
       body: SingleChildScrollView(
         padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 82),
+        controller: _scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -308,9 +319,41 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                   setState(() {
                     _isWifiAvailable = value!;
                   });
+
+                  if (value == true) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollController.animateTo(_scrollController.position.maxScrollExtent,
+                          duration: Duration(milliseconds: 100), curve: Curves.easeOut);
+                    });
+                  }
                 },
               ),
             ),
+            if (_isWifiAvailable)
+              Column(
+                children: [
+                  TextField(
+                    controller: _storeWifiIdController,
+                    style: TextStyle(fontSize: 20),
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "와이파이 ID, 이름",
+                    ),
+                  ),
+                  SizedBox(height: 8,),
+                  TextField(
+                    controller: _storeWifiPwController,
+                    style: TextStyle(fontSize: 20),
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "와이파이 비밀번호",
+                    ),
+                  ),
+                ],
+              )
+
           ],
         ),
       ),

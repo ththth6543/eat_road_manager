@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 
 import 'package:eat_road_manager/create_store_marker.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'store_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'create_store/create_store_others.dart';
+import 'create_store/create_store_check_document.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -199,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: Container(
                 width: 200,
-                height: 200,
+                height: 100,
                 color: Colors.blueAccent,
                 child: Text("가게 마커"),
               ),
@@ -216,9 +216,24 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: Container(
                 width: 200,
-                height: 200,
+                height: 100,
                 color: Colors.deepPurpleAccent,
                 child: Text("가게 마커"),
+              ),
+            ),
+            SizedBox(height: 20,),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateStoreCheckDocument()),
+                );
+              },
+              child: Container(
+                width: 200,
+                height: 100,
+                color: Colors.redAccent,
+                child: Text("영업 신고증, 사업자 번호 확인"),
               ),
             ),
           ],
