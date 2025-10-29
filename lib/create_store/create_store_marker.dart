@@ -197,6 +197,7 @@ class _CreateStoreMarkerState extends State<CreateStoreMarker> {
         'sggNm': _initialAddressData?['sggNm'],
         'emdNm': _initialAddressData?['emdNm'],
         'liNm': _initialAddressData?['liNm'],
+        'bdMgtSn': _initialAddressData?['bdMgtSn'],
       })
           .eq('id', widget.storeId);
 

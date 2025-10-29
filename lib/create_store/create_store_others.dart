@@ -17,6 +17,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _openTimeController = TextEditingController();
   final TextEditingController _closeTimeController = TextEditingController();
+  final TextEditingController _lastOrderTimeController = TextEditingController();
   final TextEditingController _storePhoneNumberController =
       TextEditingController();
   final TextEditingController _storeSNSController = TextEditingController();
@@ -32,6 +33,9 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
   // 영업시간 저장
   Duration _selectedTime = Duration.zero;
 
+  // 라스트 오더 여부
+  bool _isLastOrderAvailable = false;
+
   //예약 가능 여부
   bool _isReservationAvailable = false;
 
@@ -43,6 +47,80 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
 
   // wi-fi 사용 가능 여부
   bool _isWifiAvailable = false;
+
+  // 데이터 업로드 중 상태 관리
+  bool _isUploading = false;
+
+  // 데이터를 수집하여 Supabase에 업데이트하는 함수
+  Future<void> _saveStoreOthers() async {
+    if (_isUploading) return; // 중복 실행 방지
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    debugPrint('[DEBUG] 데이터 저장 시작: storeId = ${widget.storeId}');
+
+    try {
+      // 1. 데이터 준비
+      final List<String> businessDays = [];
+      for (int i = 0; i < _selectedDays.length; i++) {
+        if (_selectedDays[i]) {
+          businessDays.add(_days[i]);
+        }
+      }
+
+      final data = {
+        'openTime': _openTimeController.text,
+        'closeTime': _closeTimeController.text,
+        'lastOrderTime': _isLastOrderAvailable ? _lastOrderTimeController.text : null,
+        'businessDays': businessDays,
+        'storePhoneNumber': _storePhoneNumberController.text,
+        'isReservationAvailable': _isReservationAvailable,
+        'snsUrl': _storeSNSController.text,
+        'isParkingAvailable': _isParkingAvailable,
+        'parkingInfo': _isParkingAvailable ? _storeParkingController.text : null,
+        'isTakeoutAvailable': _isTakeoutAvailable,
+        'seatsInfo': _storeSeatsController.text,
+        'isWifiAvailable': _isWifiAvailable,
+        'wifiId': _isWifiAvailable ? _storeWifiIdController.text : null,
+        'wifiPw': _isWifiAvailable ? _storeWifiPwController.text : null,
+      };
+
+      debugPrint('[DEBUG] 전송할 데이터12: $data');
+
+      // 2. 데이터베이스 연동
+      await supabase.from('stores').update(data).eq('id', widget.storeId);
+
+
+      debugPrint('[DEBUG] 데이터 저장 성공!');
+
+      // 3. 사용자 피드백 (성공)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('가게 정보가 저장되었습니다.')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // 4. 오류 로그 출력
+      debugPrint('[DEBUG] 데이터 저장 실패: ${e.runtimeType} - $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류가 발생했습니다: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+
+
 
   void _setOpenAndCloseTime(TextEditingController controller) {
     showCupertinoModalPopup(
@@ -94,6 +172,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
     _storeSeatsController.dispose();
     _storeWifiIdController.dispose();
     _storeWifiPwController.dispose();
+    _lastOrderTimeController.dispose();
     super.dispose();
   }
 
@@ -158,8 +237,9 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                 Icon(Icons.access_time),
                 SizedBox(width: 10),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.25,
+                  width: MediaQuery.of(context).size.width * 0.3,
                   child: TextField(
+                    textAlign: TextAlign.center,
                     controller: _openTimeController,
                     style: TextStyle(fontSize: 20),
                     readOnly: true,
@@ -174,8 +254,9 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                 Text("~", style: TextStyle(fontSize: 30)),
                 SizedBox(width: 10),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.25,
+                  width: MediaQuery.of(context).size.width * 0.3,
                   child: TextField(
+                    textAlign: TextAlign.center,
                     controller: _closeTimeController,
                     style: TextStyle(fontSize: 20),
                     readOnly: true,
@@ -186,15 +267,52 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                     ),
                   ),
                 ),
+                SizedBox(height: 10),
               ],
             ),
-
-            SizedBox(height: 30),
+            SizedBox(height: 10),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: CheckboxListTile(
+                title: Text(
+                  "라스트 오더",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                controlAffinity: ListTileControlAffinity.trailing,
+                activeColor: Colors.blueAccent,
+                selectedTileColor: Colors.blue,
+                contentPadding: EdgeInsets.only(left: 0),
+                value: _isLastOrderAvailable,
+                onChanged: (value) {
+                  setState(() {
+                    _isLastOrderAvailable = value!;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 5,),
+            if (_isLastOrderAvailable)
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.3,
+                child: TextField(
+                  textAlign: TextAlign.center,
+                  controller: _lastOrderTimeController,
+                  style: TextStyle(fontSize: 20),
+                  readOnly: true,
+                  onTap: () => _setOpenAndCloseTime(_lastOrderTimeController),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "라스트 오더"
+                  ),
+                ),
+              ),
+            Divider(height: 20,),
+            SizedBox(height: 15),
             _makeTitle("영업일"),
             SizedBox(height: 10),
             SizedBox(height: 50, child: _makeOpenDate()),
 
-            SizedBox(height: 30),
+            Divider(height: 50,),
             _makeTitle("전화번호"),
 
             SizedBox(height: 10),
@@ -208,7 +326,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
               ),
             ),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
+              width: MediaQuery.of(context).size.width * 0.5,
               child: CheckboxListTile(
                 title: Text(
                   "예약 가능 여부",
@@ -217,7 +335,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                 activeColor: Colors.blueAccent,
                 controlAffinity: ListTileControlAffinity.trailing,
                 value: _isReservationAvailable,
-                contentPadding: EdgeInsets.only(left: 0),
+                contentPadding: EdgeInsets.zero,
                 onChanged: (value) {
                   setState(() {
                     _isReservationAvailable = value!;
@@ -226,7 +344,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
               ),
             ),
 
-            SizedBox(height: 30),
+            Divider(height: 40,),
             _makeTitle("SNS 주소"),
             SizedBox(height: 10),
             TextField(
@@ -239,7 +357,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
               ),
             ),
 
-            SizedBox(height: 10),
+            Divider(height: 40,),
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.6,
               child: CheckboxListTile(
@@ -270,6 +388,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                 ),
               ),
 
+            Divider(height: 40,),
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.6,
               child: CheckboxListTile(
@@ -289,9 +408,10 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
               ),
             ),
 
-            SizedBox(height: 20,),
+            Divider(height: 40,),
+
             _makeTitle('좌석 형태 및 수용 규모(단체석 여부)'),
-            SizedBox(height: 10,),
+            SizedBox(height: 10),
             TextField(
               controller: _storeSeatsController,
               style: TextStyle(fontSize: 20),
@@ -299,11 +419,11 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
               keyboardType: TextInputType.multiline,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                labelText: "좌석 형태(테이블, 바, 룸, 좌식 등), 수용 인원을 알려주세요",
-                labelStyle: TextStyle(fontSize: 15)
+                labelText: "좌석 형태(테이블, 룸 등), 수용 인원을 자세히 적어주세요",
+                labelStyle: TextStyle(fontSize: 15),
               ),
             ),
-            SizedBox(height: 10,),
+            Divider(height: 50,),
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.6,
               child: CheckboxListTile(
@@ -313,7 +433,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                 ),
                 activeColor: Colors.blueAccent,
                 controlAffinity: ListTileControlAffinity.trailing,
-                contentPadding: EdgeInsets.only(left: 0,),
+                contentPadding: EdgeInsets.only(left: 0),
                 value: _isWifiAvailable,
                 onChanged: (value) {
                   setState(() {
@@ -322,8 +442,11 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
 
                   if (value == true) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-                          duration: Duration(milliseconds: 100), curve: Curves.easeOut);
+                      _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent,
+                        duration: Duration(milliseconds: 100),
+                        curve: Curves.easeOut,
+                      );
                     });
                   }
                 },
@@ -338,10 +461,10 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
-                      labelText: "와이파이 ID, 이름",
+                      labelText: "와이파이 ID(이름)",
                     ),
                   ),
-                  SizedBox(height: 8,),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _storeWifiPwController,
                     style: TextStyle(fontSize: 20),
@@ -352,8 +475,7 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
                     ),
                   ),
                 ],
-              )
-
+              ),
           ],
         ),
       ),
@@ -363,17 +485,19 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
         width: MediaQuery.of(context).size.width * 0.9,
         height: 50,
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: _isUploading ? null : _saveStoreOthers, // 업로드 함수 호출, 중복 방지
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blueAccent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
           ),
-          child: const Text(
-            '작성 완료',
-            style: TextStyle(fontSize: 15, color: Colors.white),
-          ),
+          child: _isUploading
+              ? const CircularProgressIndicator(color: Colors.white) // 로딩 중 표시
+              : const Text(
+                  '작성 완료',
+                  style: TextStyle(fontSize: 15, color: Colors.white),
+                ),
         ),
       ),
     );

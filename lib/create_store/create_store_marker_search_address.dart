@@ -15,6 +15,7 @@ class Juso {
   final String sggNm; // 시군구명
   final String emdNm; // 읍면동명
   final String liNm; // 법정리명
+  final String bdMgtSn; // 건물 관리 번호(building Management Serial number)
 
   Juso({
     required this.roadAddr,
@@ -28,6 +29,7 @@ class Juso {
     required this.sggNm,
     required this.emdNm,
     required this.liNm,
+    required this.bdMgtSn,
   });
 
   factory Juso.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class Juso {
       sggNm: json['sggNm'] ?? '',
       emdNm: json['emdNm'] ?? '',
       liNm: json['liNm'] ?? '',
+      bdMgtSn: json['bdMgtSn'] ?? '',
     );
   }
 
@@ -59,6 +62,7 @@ class Juso {
       'sggNm': sggNm,
       'emdNm': emdNm,
       'liNm': liNm,
+      'bdMgtSn': bdMgtSn,
     };
   }
 }
@@ -197,6 +201,7 @@ class _AddressSearchViewState extends State<AddressSearchView> {
                 final addressData = _selectedJuso!.toJson();
                 addressData['detailAddr'] = _detailAddressController.text.trim();
                 // 전체 주소 데이터를 Map 형태로 반환
+                debugPrint('건물번호: ${addressData.toString()}');
                 Navigator.pop(context, addressData);
               },
               style: ElevatedButton.styleFrom(

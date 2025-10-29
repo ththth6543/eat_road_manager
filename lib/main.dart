@@ -201,7 +201,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 200,
                 height: 100,
                 color: Colors.blueAccent,
-                child: Text("가게 마커"),
+                child: Text("가게 마커 중복을 합치기"),
               ),
             ),
 
@@ -218,7 +218,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 width: 200,
                 height: 100,
                 color: Colors.deepPurpleAccent,
-                child: Text("가게 마커"),
+                child: Text("Create store others", style: TextStyle(color: Colors.white, fontSize: 30),),
               ),
             ),
             SizedBox(height: 20,),
