@@ -56,7 +56,7 @@ class _MainLoginScreenState extends State<MainLoginScreen> {
         child: Padding(
             padding: const EdgeInsets.all(16),
           child: _isLoading
-            ? const CircularProgressIndicator()
+            ? const CircularProgressIndicator(color: Colors.blueAccent,)
               : ElevatedButton.icon(onPressed: _signInWithGoogle,
               label: const Text('Google로 로그인'),
             icon: const Icon(Icons.login),

@@ -147,7 +147,7 @@ class _AddressSearchViewState extends State<AddressSearchView> {
         ),
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent,))
               : _results.isEmpty
                   ? Center(
                       child: _hasSearched

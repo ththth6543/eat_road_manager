@@ -227,7 +227,7 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
       appBar: AppBar(title: const Text('가게 소개 및 사진')),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(semanticsLabel: '가게 생성 중...'),
+              child: CircularProgressIndicator(color: Colors.blueAccent, semanticsLabel: '가게 생성 중...'),
             )
           : Stack(
               children: [
@@ -304,7 +304,7 @@ class _CreateStoreOverviewState extends State<CreateStoreOverview>
                                 color: Colors.grey[300],
                                 child: _isUploading
                                     ? const Center(
-                                        child: CircularProgressIndicator(),
+                                        child: CircularProgressIndicator(color: Colors.blueAccent,),
                                       )
                                     : const Icon(
                                         Icons.add_a_photo,

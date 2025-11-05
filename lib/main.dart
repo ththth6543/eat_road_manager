@@ -24,8 +24,8 @@ void main() async {
           debugPrint("사용량 초과 (message: $message)");
           break;
         case NUnauthorizedClientException() ||
-        NClientUnspecifiedException() ||
-        NAuthFailedException():
+            NClientUnspecifiedException() ||
+            NAuthFailedException():
           debugPrint("인증 실패: $ex");
           break;
       }
@@ -35,7 +35,7 @@ void main() async {
   await Supabase.initialize(
     url: 'https://xvxyrdqnidcygepvnmjl.supabase.co',
     anonKey:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eHlyZHFuaWRjeWdlcHZubWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDYzMjYsImV4cCI6MjA3MjQ4MjMyNn0.Sz8ZKu_oCrocfd6nRo9RNDtljpTKLwXmMvsNNZ3vj-s",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eHlyZHFuaWRjeWdlcHZubWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5MDYzMjYsImV4cCI6MjA3MjQ4MjMyNn0.Sz8ZKu_oCrocfd6nRo9RNDtljpTKLwXmMvsNNZ3vj-s",
   );
 
   runApp(const MyApp());
@@ -57,10 +57,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       // 지원할 언어 설정 (여기서는 한국어와 영어)
-      supportedLocales: const [
-        Locale('ko', 'KR'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
       // 앱의 기본 로케일을 한국어로 설정
       locale: const Locale('ko'),
       // streambuilder를 사용하여 인증 상태에 따라 첫 화면을 결정
@@ -70,7 +67,7 @@ class MyApp extends StatelessWidget {
           // 스트림에서 첫 데이터를 기다리는 동안 띄울 로딩화면
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(child: CircularProgressIndicator(color: Colors.blueAccent,)),
             );
           }
           // 데이터가 있고 세션이 null이면 로그인 상태
@@ -94,22 +91,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // 중복 클릭을 방지
   bool _isCreatingStore = false;
 
   Future<void> _navigateToCreateStore() async {
-    // 이미 실행 중이면 중복 실행 방지
     if (_isCreatingStore) return;
-
-    setState(() {
-      _isCreatingStore = true;
-    });
+    setState(() => _isCreatingStore = true);
 
     try {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('로그인 해주세요');
 
-      // 현재 유저가 만들다 만 가게 (status가 'DRAFT' 일 경우)가 있는지 확인
       final List<dynamic> drafts = await supabase
           .from('stores')
           .select('id')
@@ -117,124 +108,128 @@ class _MyHomePageState extends State<MyHomePage> {
           .eq('status', 'DRAFT');
 
       String storeId;
-
-      //임시저장 가게가 있으면 그 id를 사용
       if (drafts.isNotEmpty) {
         storeId = drafts.first['id'].toString();
-        debugPrint('현재 작성중인 가게로 이동: $storeId');
       } else {
-        // 임시저장 가게가 없으면 새로 생성
         final newData = await supabase
             .from('stores')
             .insert({'owner_id': userId, 'name': '임시 가게', 'status': 'DRAFT'})
             .select('id')
             .single();
         storeId = newData['id'].toString();
-        debugPrint('새로운 가게 생성: $storeId');
       }
 
       if (mounted) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateStoreOverview(storeId: storeId,)));
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CreateStoreOverview(storeId: storeId),
+          ),
+        );
       }
     } catch (e) {
-      debugPrint('가게 생성 오류: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("오류가 발생 했습니다: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("오류가 발생했습니다: $e")));
       }
     } finally {
-      setState(() {
-        _isCreatingStore = false;
-      });
+      if (mounted) {
+        setState(() => _isCreatingStore = false);
+      }
     }
+  }
+
+  // 파라미터를 받는 새로운 버튼 생성 헬퍼 메소드
+  Widget _createButton({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              )
+            ]),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: Colors.white),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme
-            .of(context)
-            .colorScheme
-            .inversePrimary,
-        title: Text("사장님 용"),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text("사장님용"),
       ),
-      endDrawer: MainDrawer(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      endDrawer: const MainDrawer(),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        // 2x3 그리드 뷰 생성
+        child: GridView.count(
+          crossAxisCount: 2, // 2열
+          crossAxisSpacing: 16, // 열 사이 간격
+          mainAxisSpacing: 16, // 행 사이 간격
           children: <Widget>[
-            GestureDetector(
+            _createButton(
+              title: '가게 등록 / 수정',
+              icon: Icons.add_business,
+              color: Colors.blueAccent,
               onTap: _navigateToCreateStore,
-              child: Container(
-                width: 200,
-                height: 100,
-                color: Colors.amber,
-                child: Text("가게 생성"),
-              ),
             ),
-            SizedBox(height: 20),
-            //지도
-            GestureDetector(
+            _createButton(
+              title: '내 가게 목록',
+              icon: Icons.store,
+              color: Colors.orangeAccent,
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateStoreMarker()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const StoreScreen()));
               },
-              child: Container(
-                width: 200,
-                height: 100,
-                color: Colors.green,
-                child: Text("가게 마커"),
-              ),
             ),
-            SizedBox(height: 20),
-            //지도
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StoreScreen()),
-                );
-              },
-              child: Container(
-                width: 200,
-                height: 100,
-                color: Colors.blueAccent,
-                child: Text("가게 마커 중복을 합치기"),
-              ),
+            _createButton(
+              title: '예약 관리',
+              icon: Icons.calendar_today,
+              color: Colors.green,
+              onTap: () { /* TODO: 예약 관리 화면으로 이동 */ },
             ),
-
-            SizedBox(height: 20),
-            //지도
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateStoreOthers(storeId: '20')),
-                );
-              },
-              child: Container(
-                width: 200,
-                height: 100,
-                color: Colors.deepPurpleAccent,
-                child: Text("Create store others", style: TextStyle(color: Colors.white, fontSize: 30),),
-              ),
+            _createButton(
+              title: '리뷰 관리',
+              icon: Icons.rate_review,
+              color: Colors.purpleAccent,
+              onTap: () { /* TODO: 리뷰 관리 화면으로 이동 */ },
             ),
-            SizedBox(height: 20,),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateStoreCheckDocument()),
-                );
-              },
-              child: Container(
-                width: 200,
-                height: 100,
-                color: Colors.redAccent,
-                child: Text("영업 신고증, 사업자 번호 확인"),
-              ),
+            _createButton(
+              title: '매출 통계',
+              icon: Icons.bar_chart,
+              color: Colors.redAccent,
+              onTap: () { /* TODO: 매출 통계 화면으로 이동 */ },
+            ),
+            _createButton(
+              title: '설정',
+              icon: Icons.settings,
+              color: Colors.grey,
+              onTap: () { /* TODO: 설정 화면으로 이동 */ },
             ),
           ],
         ),

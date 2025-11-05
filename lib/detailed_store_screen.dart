@@ -1,11 +1,19 @@
-import 'package:eat_road_manager/store_screen.dart';
+import 'package:eat_road_manager/store_info.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:marquee/marquee.dart';
 
-// StatefulWidget으로 변경
+final supabase = Supabase.instance.client;
+
 class DetailedStoreScreen extends StatefulWidget {
-  final Store store;
+  final int storeId;
+  final VoidCallback onClose;
 
-  const DetailedStoreScreen({super.key, required this.store});
+  const DetailedStoreScreen({
+    super.key,
+    required this.storeId,
+    required this.onClose,
+  });
 
   @override
   State<DetailedStoreScreen> createState() => _DetailedStoreScreenState();
@@ -13,150 +21,160 @@ class DetailedStoreScreen extends StatefulWidget {
 
 class _DetailedStoreScreenState extends State<DetailedStoreScreen>
     with SingleTickerProviderStateMixin {
-  // TabController를 위한 Mixin 추가
   TabController? _tabController;
+  StoreInfo? _storeInfo;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    // TabController 초기화 (3개의 탭)
     _tabController = TabController(length: 3, vsync: this);
+    _fetchStoreDetails();
+  }
+
+  Future<void> _fetchStoreDetails() async {
+    try {
+      final data = await supabase
+          .from('stores')
+          .select()
+          .eq('id', widget.storeId)
+          .single();
+      if (mounted) {
+        setState(() {
+          _storeInfo = StoreInfo.fromMap(data);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '데이터를 불러오는 데 실패했습니다: $e';
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _tabController?.dispose(); // Controller 해제
+    _tabController?.dispose();
     super.dispose();
   }
+
+  double _sheetposition = 0.4;
+  final double _dragSensivity = 600;
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.4,
-      minChildSize: 0.2,
-      maxChildSize: 1.0,
-      expand: false,
+      initialChildSize: _sheetposition,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
           ),
-          child: Column(
-            children: [
-              // 드래그 핸들
-              Container(
-                width: 40,
-                height: 5,
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              // --- 상단 공통 정보 섹션 ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+              ? Center(child: Text(_errorMessage!))
+              : Column(
                   children: [
-                    Text(
-                      widget.store.name,
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Grabber(
+                      onVerticalDragUpdate: (DragUpdateDetails details) {
+                        setState(() {
+                          _sheetposition -= details.delta.dy / _dragSensivity;
+                          if (_sheetposition < 0.25) {
+                            _sheetposition = 0.25;
+                          }
+                          if (_sheetposition > 1.0) {
+                            _sheetposition = 1.0;
+                          }
+                        });
+                      },
                     ),
-                    // 별점
+                    Text(_storeInfo!.name, style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold), textAlign: TextAlign.center,),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.star, color: Colors.orangeAccent, size: 28),
-                        const SizedBox(width: 5),
-                        // 별점 로직 넣기
-                        Text(
-                          "4.8",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Icon(Icons.star, color: Color(0xFFFFD700), size: 30,),
+                        SizedBox(width: 5,),
+                        Text('4.8', style: TextStyle(fontSize: 20),),
                       ],
+                    ),
+                    TabBar(
+                      tabs: [
+                        Tab(text: '정보'),
+                        Tab(text: '메뉴'),
+                        Tab(text: '리뷰'),
+                      ],
+                      controller: _tabController,
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildInfoTab(_storeInfo!, scrollController),
+                          _buildMenuTab(_storeInfo!, scrollController),
+                          _buildReviewTab(_storeInfo!, scrollController),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              // --- TabBar 섹션 ---
-              Material(
-                color: Colors.white, // 배경색을 주변과 맞춤
-                child: TabBar(
-                  controller: _tabController,
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: Colors.blueAccent,
-                  // 터치 피드백(Splash) 색상 추가
-                  overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                    (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.pressed)) {
-                        return Colors.blue.withAlpha(30);
-                      }
-                      return null; // 다른 상태에서는 효과 없음
-                    },
-                  ),
-                  tabs: const [
-                    Tab(text: '정보'),
-                    Tab(text: '메뉴'),
-                    Tab(text: '리뷰'),
-                  ],
-                ),
-              ),
-              // --- TabBarView 섹션 ---
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // 각 탭의 콘텐츠 (ListView 사용)
-                    // DraggableScrollableSheet의 scrollController를 각 ListView에 전달
-                    _buildInfoTab(scrollController),
-                    _buildMenuTab(scrollController),
-                    _buildReviewTab(scrollController),
-                  ],
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
   }
 
-  // '정보' 탭 UI
-  Widget _buildInfoTab(ScrollController scrollController) {
-    return ListView(
-      controller: scrollController,
-      padding: const EdgeInsets.all(16.0),
-      children: [
-
-      ],
-    );
+  Widget _buildInfoTab(StoreInfo info, ScrollController scrollController) {
+    return ListView.builder(
+      itemCount: 15,
+        itemBuilder: (context, index) {
+      return ListTile(
+        title: Text(info.name),
+        subtitle: Text(info.description),
+      );
+    });
   }
 
-  // '메뉴' 탭 UI
-  Widget _buildMenuTab(ScrollController scrollController) {
-    return ListView(
-      controller: scrollController,
-      padding: const EdgeInsets.all(16.0),
-      children: [],
-    );
+  Widget _buildMenuTab(StoreInfo info, ScrollController scrollController) {
+    return Text("메뉴 탭");
   }
 
-  // '리뷰' 탭 UI
-  Widget _buildReviewTab(ScrollController scrollController) {
-    return ListView(
-      controller: scrollController,
-      padding: const EdgeInsets.all(16.0),
-      children: [],
+  Widget _buildReviewTab(StoreInfo info, ScrollController scrollController) {
+    return Text("리뷰탭");
+  }
+}
+
+class Grabber extends StatelessWidget {
+  const Grabber({super.key, required this.onVerticalDragUpdate});
+
+  final ValueChanged<DragUpdateDetails> onVerticalDragUpdate;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onVerticalDragUpdate: onVerticalDragUpdate,
+      child: Container(
+        width: double.infinity,
+        height: 25,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+        ),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            width: 40.0,
+            height: 5.0,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8.0), color: Colors.grey[400]),
+          ),
+        ),
+      ),
     );
   }
 }

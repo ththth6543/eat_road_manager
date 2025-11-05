@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:collection/collection.dart';
+import 'package:eat_road_manager/detailed_store_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'speech_bubble_painter.dart';
-import 'detailed_store_screen.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -15,7 +15,7 @@ class Store {
   final double latitude;
   final double longitude;
   final String? bdMgtSn;
-  final String? roadAddr;
+  final String? roadAddress;
 
   Store({
     required this.id,
@@ -23,7 +23,7 @@ class Store {
     required this.latitude,
     required this.longitude,
     this.bdMgtSn,
-    this.roadAddr,
+    this.roadAddress,
   });
 
   factory Store.fromMap(Map<String, dynamic> map) {
@@ -33,7 +33,7 @@ class Store {
       latitude: (map['latitude'] as num).toDouble(),
       longitude: (map['longitude'] as num).toDouble(),
       bdMgtSn: map['bdMgtSn'],
-      roadAddr: map['roadAddr'],
+      roadAddress: map['road_address'],
     );
   }
 }
@@ -50,13 +50,14 @@ class _StoreScreenState extends State<StoreScreen> {
   bool _isLoading = true;
   String _message = '현재 위치를 찾는 중...';
   Position? _currentPosition;
-  //Map<String, List<Store>> _groupedStores = {};
 
-  // --- 커스텀 정보창을 위한 상태 변수 ---
-  List<Store>? _selectedStores;
+  // 정보창(말풍선) 관련 상태
+  List<Store>? _selectedStoresForInfoWindow;
   Offset? _infoWindowOffset;
-  String? _selectedMarkerId;
-  // ---------------------------------
+  String? _selectedMarkerIdForInfoWindow;
+
+  // 상세 화면(DraggableSheet) 관련 상태
+  int? _selectedStoreIdForSheet;
 
   @override
   void initState() {
@@ -66,112 +67,108 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Future<void> _initializeAndLoadData() async {
     try {
-      final mapControllerFuture = _mapController.future;
-      final storesFuture = _fetchDataAndStores();
-
-      final results = await Future.wait([mapControllerFuture, storesFuture]);
-
-      final controller = results[0] as NaverMapController;
-      final nearbyStores = results[1] as List<Store>;
-
-      // 1. 모든 가게를 일단 bdMgtSn 기준으로 그룹화
-      final initialGroups = groupBy(
-        nearbyStores,
-        (store) => store.bdMgtSn?.isNotEmpty == true ? store.bdMgtSn! : store.id.toString(),
+      final mapController = await _mapController.future;
+      final stores = await _fetchDataAndStores();
+      final groupedStores = groupBy(
+        stores,
+        (store) => store.bdMgtSn?.isNotEmpty == true
+            ? store.bdMgtSn!
+            : store.id.toString(),
       );
-
-      // 2. 4개 이상인 그룹과 그 외(개별)로 분리
-      final Map<String, List<Store>> groupsToShow = {};
-      final List<Store> individualsToShow = [];
-
-      initialGroups.forEach((key, stores) {
-        // bdMgtSn이 있고, 개수가 4개 이상인 경우만 그룹으로 처리
-        if (stores.first.bdMgtSn != null && stores.first.bdMgtSn!.isNotEmpty && stores.length >= 4) {
-          groupsToShow[key] = stores;
-        } else {
-          individualsToShow.addAll(stores);
-        }
-      });
-
-      // 3. 분리된 데이터를 지도에 업데이트
-      _updateMap(controller, groupsToShow, individualsToShow);
-
-      setState(() => _isLoading = false);
-
+      _updateMap(mapController, groupedStores);
+      if (mounted) setState(() => _isLoading = false);
     } catch (e) {
       _handleError(e);
     }
   }
 
-  // 데이터 로딩 로직을 별도 함수로 분리
   Future<List<Store>> _fetchDataAndStores() async {
-    setState(() => _message = '현재 위치를 찾는 중...');
+    if (mounted) setState(() => _message = '현재 위치를 찾는 중...');
     _currentPosition = await _getCurrentLocation();
-    setState(() => _message = '주변 가게를 찾는 중...');
+    if (mounted) setState(() => _message = '주변 가게를 찾는 중...');
     return await _fetchNearbyStores(_currentPosition!);
   }
 
-  void _updateMap(NaverMapController controller, Map<String, List<Store>> groupedStores, List<Store> individualStores) {
+  void _updateMap(
+    NaverMapController controller,
+    Map<String, List<Store>> allGroups,
+  ) {
     if (_currentPosition != null) {
-      controller.updateCamera(NCameraUpdate.withParams(
-        target: NLatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-        zoom: 15,
-      ));
+      controller.updateCamera(
+        NCameraUpdate.withParams(
+          target: NLatLng(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+          ),
+          zoom: 15,
+        ),
+      );
     }
 
     controller.clearOverlays(type: NOverlayType.marker);
     final markers = <NMarker>{};
 
-    // 그룹 마커 생성 (4개 이상)
-    groupedStores.forEach((key, storesInGroup) {
+    allGroups.forEach((key, storesInGroup) {
+      if (storesInGroup.isEmpty) return;
       final firstStore = storesInGroup.first;
-      final marker = NMarker(
-        id: key, // 그룹의 고유 ID로 bdMgtSn 사용
-        position: NLatLng(firstStore.latitude, firstStore.longitude),
-        caption: NOverlayCaption(text: '${storesInGroup.length}개'),
-        size: const Size(30, 40),
-      );
+      NMarker marker;
 
-      marker.setOnTapListener((tappedMarker) async {
-        final point = await controller.latLngToScreenLocation(tappedMarker.position);
-        setState(() {
-          _selectedMarkerId = tappedMarker.info.id;
-          _selectedStores = storesInGroup;
-          _infoWindowOffset = Offset(point.x.toDouble(), point.y.toDouble());
-        });
-      });
+      if (storesInGroup.length >= 2) {
+        marker = NMarker(
+          id: key,
+          size: Size(30, 40),
+          position: NLatLng(firstStore.latitude, firstStore.longitude),
+          caption: NOverlayCaption(text: '${storesInGroup.length}개'),
+        );
+        marker.setOnTapListener(
+          (_) => _showInfoWindow(storesInGroup, marker.position),
+        );
+      } else {
+        marker = NMarker(
+          id: firstStore.id.toString(),
+          size: Size(30, 40),
+          position: NLatLng(firstStore.latitude, firstStore.longitude),
+          caption: NOverlayCaption(text: firstStore.name),
+        );
+        marker.setOnTapListener((_) => _showDetailedScreen(firstStore.id));
+      }
       markers.add(marker);
     });
-
-    // 개별 마커 생성 (3개 이하)
-    for (final store in individualStores) {
-      final marker = NMarker(
-        id: store.id.toString(),
-        position: NLatLng(store.latitude, store.longitude),
-        caption: NOverlayCaption(text: store.name),
-        size: const Size(30, 40),
-      );
-
-      marker.setOnTapListener((tappedMarker) async {
-        final point = await controller.latLngToScreenLocation(tappedMarker.position);
-        setState(() {
-          _selectedMarkerId = tappedMarker.info.id;
-          _selectedStores = [store]; // 리스트에 현재 가게 하나만 담음
-          _infoWindowOffset = Offset(point.x.toDouble(), point.y.toDouble());
-        });
-      });
-      markers.add(marker);
-    }
 
     controller.addOverlayAll(markers);
   }
 
-  void _closeInfoWindow() {
+  void _showInfoWindow(List<Store> stores, NLatLng position) async {
+    final controller = await _mapController.future;
+    final point = await controller.latLngToScreenLocation(position);
     setState(() {
-      _selectedMarkerId = null;
-      _infoWindowOffset = null;
-      _selectedStores = null;
+      _selectedMarkerIdForInfoWindow = stores.first.bdMgtSn;
+      _selectedStoresForInfoWindow = stores;
+      _infoWindowOffset = Offset(point.x.toDouble(), point.y.toDouble());
     });
+  }
+
+  void _showDetailedScreen(int storeId) {
+    _closeInfoWindow();
+    setState(() {
+      _selectedStoreIdForSheet = storeId;
+    });
+  }
+
+  void _closeInfoWindow() {
+    if (_selectedMarkerIdForInfoWindow != null) {
+      setState(() {
+        _selectedMarkerIdForInfoWindow = null;
+      });
+    }
+  }
+
+  void _closeDetailedScreen() {
+    if (_selectedStoreIdForSheet != null) {
+      setState(() {
+        _selectedStoreIdForSheet = null;
+      });
+    }
   }
 
   @override
@@ -189,15 +186,27 @@ class _StoreScreenState extends State<StoreScreen> {
               locationButtonEnable: true,
             ),
             onMapReady: (controller) {
-              if (!_mapController.isCompleted) _mapController.complete(controller);
+              if (!_mapController.isCompleted) {
+                _mapController.complete(controller);
+              }
             },
-            onMapTapped: (point, latLng) => _closeInfoWindow(),
+            onMapTapped: (point, latLng) {
+              _closeInfoWindow();
+              _closeDetailedScreen();
+            },
             onCameraChange: (reason, animated) => _closeInfoWindow(),
           ),
-          if (_isLoading)
-            _buildLoadingIndicator(),
-          if (_selectedMarkerId != null && _infoWindowOffset != null && _selectedStores != null)
-            _buildCustomInfoWindow(),
+          if (_isLoading) _buildLoadingIndicator(),
+
+          // 정보창(말풍선)
+          if (_selectedMarkerIdForInfoWindow != null) _buildCustomInfoWindow(),
+
+          // 상세 화면(Draggable Sheet)
+          if (_selectedStoreIdForSheet != null)
+            DetailedStoreScreen(
+              storeId: _selectedStoreIdForSheet!,
+              onClose: _closeDetailedScreen,
+            ),
         ],
       ),
     );
@@ -205,75 +214,62 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _buildCustomInfoWindow() {
     const double infoWindowWidth = 250.0;
-    final double infoWindowHeight = 60.0 + (_selectedStores!.length * 50.0);
+    final double infoWindowHeight =
+        60.0 + (_selectedStoresForInfoWindow!.length * 50.0);
 
     return Positioned(
       left: _infoWindowOffset!.dx - (infoWindowWidth / 2),
-      top: _infoWindowOffset!.dy - infoWindowHeight - 45, // 마커와 말풍선 사이 간격
-      child: Container(
-        // 그림자 효과를 위한 컨테이너
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(10),
-              blurRadius: 10.0,
-              offset: const Offset(0, 4),
-            ),
-          ],
+      top: _infoWindowOffset!.dy - infoWindowHeight - 45,
+      child: CustomPaint(
+        painter: SpeechBubblePainter(
+          bubbleColor: Colors.white,
+          borderColor: Colors.grey[400]!,
+          borderWidth: 2,
         ),
-        child: CustomPaint(
-          painter: SpeechBubblePainter(
-            bubbleColor: Colors.white,
-            borderColor: Colors.grey[400]!,
-            borderWidth: 1.5,
-          ),
-          child: Container(
-            width: infoWindowWidth,
-            height: infoWindowHeight,
-            padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0), // 꼬리 고려
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _selectedStores!.first.roadAddr ?? '가게 목록',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  overflow: TextOverflow.ellipsis,
+        child: Container(
+          width: infoWindowWidth,
+          height: infoWindowHeight,
+          padding: EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _selectedStoresForInfoWindow!.first.roadAddress ?? '가게 목록',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: _selectedStores!.length,
-                    itemBuilder: (context, index) {
-                      final store = _selectedStores![index];
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          splashColor: Colors.lightBlue.withAlpha(40),
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () {
-                            // 정보창을 먼저 닫음
-                            _closeInfoWindow();
-
-                            // DraggableScrollableSheet를 포함한 상세 화면을 모달로 띄움
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true, // 전체 화면까지 드래그 가능하도록 설정
-                              backgroundColor: Colors.transparent, // 배경을 투명하게 하여 커스텀 디자인 적용
-                              builder: (context) => DetailedStoreScreen(store: store),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 12.0),
-                            child: Text(store.name, style: const TextStyle(fontSize: 18)),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: _selectedStoresForInfoWindow!.length,
+                  itemBuilder: (context, index) {
+                    final store = _selectedStoresForInfoWindow![index];
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        splashColor: Colors.lightBlue.withAlpha(40),
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => _showDetailedScreen(store.id),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4.0,
+                            vertical: 12.0,
+                          ),
+                          child: Text(
+                            store.name,
+                            style: const TextStyle(fontSize: 18),
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -287,7 +283,7 @@ class _StoreScreenState extends State<StoreScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
+            const CircularProgressIndicator(color: Colors.blueAccent),
             const SizedBox(height: 16),
             Text(_message, style: const TextStyle(color: Colors.white)),
           ],
@@ -297,18 +293,17 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   void _handleError(Object e) {
-    setState(() {
-      _isLoading = false;
-      _message = '오류: ${e.toString()}';
-    });
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('오류가 발생했습니다: ${e.toString()}')),
-      );
+      setState(() {
+        _isLoading = false;
+        _message = '오류: ${e.toString()}';
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: ${e.toString()}')));
     }
   }
 
-  // --- 데이터 로딩 및 위치 관련 함수들 (기존과 동일) ---
   Future<Position> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return Future.error('위치 서비스가 비활성화되어 있습니다.');
@@ -316,18 +311,19 @@ class _StoreScreenState extends State<StoreScreen> {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return Future.error('위치 권한이 거부되었습니다.');
+      if (permission == LocationPermission.denied)
+        return Future.error('위치 권한이 거부되었습니다.');
     }
     if (permission == LocationPermission.deniedForever) {
       return Future.error('위치 권한이 영구적으로 거부되었습니다. 앱 설정에서 권한을 허용해주세요.');
     }
-    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    return await Geolocator.getCurrentPosition(
+      locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
+    );
   }
 
   Future<List<Store>> _fetchNearbyStores(Position position) async {
     try {
-      debugPrint('[DEBUG] nearby_stores RPC 호출 시작: lat=${position.latitude}, long=${position.longitude}');
-
       final List<dynamic> result = await supabase
           .rpc(
             'nearby_stores',
@@ -337,24 +333,15 @@ class _StoreScreenState extends State<StoreScreen> {
               'radius_m': 5000,
             },
           )
-          .timeout(const Duration(seconds: 10)); // 10초 타임아웃 추가
-
-      if (result.isEmpty) {
-        debugPrint('[DEBUG] 주변 가게 없음.');
-        return [];
-      }
-
-      debugPrint('[DEBUG] ${result.length}개의 가게를 찾았습니다. 파싱 시작...');
-      final stores = result.map((data) => Store.fromMap(data as Map<String, dynamic>)).toList();
-      debugPrint('[DEBUG] 파싱 완료. 가게 목록을 반환합니다.');
-      return stores;
-
+          .timeout(const Duration(seconds: 10));
+      if (result.isEmpty) return [];
+      return result
+          .map((data) => Store.fromMap(data as Map<String, dynamic>))
+          .toList();
     } on TimeoutException {
-      debugPrint('[DEBUG] 오류: RPC 호출이 10초를 초과했습니다 (Timeout).');
-      return Future.error('서버 응답이 너무 늦어 데이터를 불러오지 못했습니다.');
+      throw ('서버 응답이 너무 늦어 데이터를 불러오지 못했습니다.');
     } catch (e) {
-      debugPrint('[DEBUG] _fetchNearbyStores에서 오류 발생: $e');
-      return Future.error('가게 정보를 불러오는 데 실패했습니다.');
+      throw ('가게 정보를 불러오는 데 실패했습니다.');
     }
   }
 }
