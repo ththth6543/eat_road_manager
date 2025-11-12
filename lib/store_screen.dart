@@ -174,7 +174,7 @@ class _StoreScreenState extends State<StoreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('주변 가게')),
+      //appBar: AppBar(title: const Text('주변 가게')),
       body: Stack(
         children: [
           NaverMap(
@@ -204,6 +204,7 @@ class _StoreScreenState extends State<StoreScreen> {
           // 상세 화면(Draggable Sheet)
           if (_selectedStoreIdForSheet != null)
             DetailedStoreScreen(
+              key: ValueKey(_selectedStoreIdForSheet!),
               storeId: _selectedStoreIdForSheet!,
               onClose: _closeDetailedScreen,
             ),

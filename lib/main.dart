@@ -11,6 +11,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'create_store/create_store_others.dart';
 import 'create_store/create_store_check_document.dart';
+import 'test.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -220,16 +221,20 @@ class _MyHomePageState extends State<MyHomePage> {
               onTap: () { /* TODO: 리뷰 관리 화면으로 이동 */ },
             ),
             _createButton(
-              title: '매출 통계',
+              title: 'others',
               icon: Icons.bar_chart,
               color: Colors.redAccent,
-              onTap: () { /* TODO: 매출 통계 화면으로 이동 */ },
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateStoreOthers(storeId: '20',)));
+              },
             ),
             _createButton(
               title: '설정',
               icon: Icons.settings,
               color: Colors.grey,
-              onTap: () { /* TODO: 설정 화면으로 이동 */ },
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => DraggableTabSheetExample()));
+              },
             ),
           ],
         ),

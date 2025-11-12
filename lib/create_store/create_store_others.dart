@@ -272,10 +272,10 @@ class _CreateStoreOthersState extends State<CreateStoreOthers> {
             ),
             SizedBox(height: 10),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
+              width: MediaQuery.of(context).size.width * 0.8,
               child: CheckboxListTile(
                 title: Text(
-                  "라스트 오더",
+                  "주문 마감 시간(라스트 오더)",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 controlAffinity: ListTileControlAffinity.trailing,
