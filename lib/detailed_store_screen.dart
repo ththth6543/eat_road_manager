@@ -80,7 +80,7 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
       minChildSize: 0.4,
-      maxChildSize: 1.0,
+      maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Container(
           height: 500,
