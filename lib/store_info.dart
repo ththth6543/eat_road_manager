@@ -16,7 +16,7 @@ class StoreInfo {
   // 선택 값 (Nullable)
   final String? detailAddr;
   final String? storePhoneNumber;
-  final List<String>? imageUrls;
+  final List<String>? interiorImageUrls;
   final String? lastOrderTime;
   final String? parkingInfo;
   final String? snsUrl;
@@ -36,7 +36,7 @@ class StoreInfo {
     required this.isTakeoutAvailable,
     required this.isWifiAvailable,
 
-    this.imageUrls = const [],
+    this.interiorImageUrls = const [],
     this.detailAddr,
     this.lastOrderTime,
     this.storePhoneNumber,
@@ -62,15 +62,15 @@ class StoreInfo {
       isWifiAvailable: info['isWifiAvailable'] ?? false,
       isTakeoutAvailable: info['isTakeoutAvailable'] ?? false,
 
-      imageUrls: (info['image_urls'] as List<dynamic>?)?.cast<String>() ?? [],
-      detailAddr: info['detailAddr'] ?? [],
-      lastOrderTime: info['lastOrderTime'] ?? [],
-      storePhoneNumber: info['storePhoneNumber'] ?? [],
-      snsUrl: info['snsUrl'] ?? [],
-      parkingInfo: info['parkingInfo'] ?? [],
-      seatsInfo: info['seatsInfo'] ?? [],
-      wifiId: info['wifiId'] ?? [],
-      wifiPw: info['wifiPw'] ?? [],
+      interiorImageUrls: (info['image_urls'] as List<dynamic>?)?.cast<String>() ?? [],
+      detailAddr: info['detailAddr'],
+      lastOrderTime: info['lastOrderTime'],
+      storePhoneNumber: info['storePhoneNumber'],
+      snsUrl: info['snsUrl'],
+      parkingInfo: info['parkingInfo'],
+      seatsInfo: info['seatsInfo'],
+      wifiId: info['wifiId'],
+      wifiPw: info['wifiPw'],
     );
   }
 
@@ -85,7 +85,7 @@ class StoreInfo {
     isParkingAvailable,
     isTakeoutAvailable,
     isWifiAvailable,
-    imageUrls,
+    interiorImageUrls,
     detailAddr,
     lastOrderTime,
     storePhoneNumber,
