@@ -1,5 +1,6 @@
 import 'package:eat_road_manager/store_info.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'detailed_store_screen_block_icon.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'detailed_store_screen_text_button.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:eat_road_manager/detailed_store_screen_full_screen_image_view.dart';
+import 'package:eat_road_manager/detailed_store_screen_expand_info_tile.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -31,13 +33,15 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
   bool _isLoading = true;
   String? _errorMessage;
 
+  bool _isParkingExpanded = false;
+
   //smooth page indicator
   final PageController _smoothPageController = PageController();
   int _currentPage = 0;
 
   //carousel_slider
   final CarouselSliderController _carouselSliderController =
-  CarouselSliderController();
+      CarouselSliderController();
 
   @override
   void initState() {
@@ -69,6 +73,8 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
     }
   }
 
+  final mainColor = Color.fromRGBO(255, 143, 33, 1);
+
   @override
   void dispose() {
     _tabController?.dispose();
@@ -78,9 +84,9 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.4,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
+      initialChildSize: 0.3,
+      minChildSize: 0.3,
+      maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
           height: 500,
@@ -91,81 +97,90 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
           ),
           child: _isLoading
               ? const Center(
-            child: CircularProgressIndicator(
-              color: Color.fromRGBO(255, 143, 33, 1),
-            ),
-          )
+                  child: CircularProgressIndicator(
+                    color: Color.fromRGBO(255, 143, 33, 1),
+                  ),
+                )
               : _errorMessage != null
               ? Center(child: Text(_errorMessage!))
               : Column(
-            children: [
-              Center(
-                child: Container(
-                  margin: EdgeInsets.symmetric(vertical: 15),
-                  width: 50,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              Text(
-                _storeInfo!.name,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              // 별점 시스템 넣기
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.star, color: Color(0xFFFFD700), size: 30),
-                  SizedBox(width: 5),
-                  Text('4.8', style: TextStyle(fontSize: 20)),
-                ],
-              ),
-              SizedBox(height: 10),
-              // color: #F47B25
-              TabBar(
-                labelColor: Color.fromRGBO(255, 143, 33, 1.0),
-                indicatorColor: Color.fromRGBO(255, 143, 33, 1.0),
-                padding: EdgeInsets.only(
-                  top: 0,
-                  left: 15,
-                  right: 15,
-                  bottom: 0,
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                unselectedLabelColor: Colors.grey,
-                overlayColor: WidgetStateProperty.resolveWith<Color?>((
-                    states,) {
-                  if (states.contains(WidgetState.pressed)) {
-                    return Color.fromRGBO(255, 143, 33, 1);
-                  }
-                  return null;
-                }),
-                tabs: [
-                  Tab(text: '정보'),
-                  Tab(text: '메뉴'),
-                  Tab(text: '리뷰'),
-                ],
-                controller: _tabController,
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
                   children: [
-                    _buildInfoTab(_storeInfo!, scrollController),
-                    _buildMenuTab(_storeInfo!, scrollController),
-                    _buildReviewTab(_storeInfo!, scrollController),
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 0),
+                      width: double.infinity,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: mainColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _storeInfo!.name,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    // 별점 시스템 넣기
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.star, color: Color(0xFFFFD700), size: 30),
+                        SizedBox(width: 5),
+                        Text('4.8', style: TextStyle(fontSize: 20)),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    // color: #F47B25
+                    TabBar(
+                      labelColor: Color.fromRGBO(255, 143, 33, 1.0),
+                      indicatorColor: Color.fromRGBO(255, 143, 33, 1.0),
+                      padding: EdgeInsets.only(
+                        top: 0,
+                        left: 15,
+                        right: 15,
+                        bottom: 0,
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      unselectedLabelColor: Colors.grey,
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>((
+                        states,
+                      ) {
+                        if (states.contains(WidgetState.pressed)) {
+                          return Color.fromRGBO(255, 143, 33, 1);
+                        }
+                        return null;
+                      }),
+                      tabs: [
+                        Tab(text: '정보'),
+                        Tab(text: '메뉴'),
+                        Tab(text: '리뷰'),
+                      ],
+                      controller: _tabController,
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildInfoTab(_storeInfo!, scrollController),
+                          _buildMenuTab(_storeInfo!, scrollController),
+                          _buildReviewTab(_storeInfo!, scrollController),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -176,7 +191,7 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
       controller: scrollController,
       child: Column(
         children: [
-          SizedBox(height: 10,),
+          SizedBox(height: 10),
           Stack(
             alignment: Alignment.bottomCenter,
             children: [
@@ -189,18 +204,17 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) =>
-                            DetailedStoreScreenFullScreenImageView
-                              (imageUrls: _storeInfo!.interiorImageUrls!,
-                                initialIndex: itemIndex)
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DetailedStoreScreenFullScreenImageView(
+                                imageUrls: _storeInfo!.interiorImageUrls!,
+                                initialIndex: itemIndex,
+                              ),
                         ),
                       );
                     },
                     child: Container(
-                      height: MediaQuery
-                          .of(context)
-                          .size
-                          .width,
+                      height: MediaQuery.of(context).size.width,
                       margin: EdgeInsets.symmetric(horizontal: 5),
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
@@ -215,9 +229,10 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
                             if (loadingProgress == null) return child;
                             return Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             );
@@ -267,10 +282,15 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
             ],
           ),
           // Iconbutton
-          BlockIcon(),
+          BlockIcon(
+            parkingAvailable: _storeInfo!.isParkingAvailable,
+            reservationAvailable: _storeInfo!.isReservationAvailable,
+            wifiAvailable: _storeInfo!.isWifiAvailable,
+            takeoutAvailable: _storeInfo!.isTakeoutAvailable,
+          ),
           //description
           Container(
-            padding: EdgeInsets.only(top: 10, left: 15, right: 15, bottom: 10),
+            padding: EdgeInsets.only(top: 5, left: 15, right: 15, bottom: 10),
             width: double.infinity,
             child: Text(info.description),
           ),
@@ -292,7 +312,7 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
                   text: '${info.roadAddr} ${info.detailAddr ?? ''}'.trim(),
                   onPressed: () {
                     final fullAddress =
-                    '${info.roadAddr} ${info.detailAddr ?? ''}'.trim();
+                        '${info.roadAddr} ${info.detailAddr ?? ''}'.trim();
 
                     if (fullAddress.isNotEmpty) {
                       Clipboard.setData(ClipboardData(text: fullAddress));
@@ -341,6 +361,10 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
                   icon: Icons.dining,
                   text: '주문 마감 시간: ${info.lastOrderTime ?? '정보 없음'}',
                 ),
+                IconTextButton(
+                  icon: Icons.calendar_today,
+                  text: "영업일: ${info.businessDays.join(', ')}",
+                ),
               ],
             ),
           ),
@@ -361,6 +385,22 @@ class _DetailedStoreScreenState extends State<DetailedStoreScreen>
                   textAlign: TextAlign.start,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   "세부 사항",
+                ),
+                SizedBox(height: 10),
+                Column(
+                  children: [
+                    // 세부 사항 주차
+                    ExpandInfoTile(
+                      title: '주차',
+                      expandedInfo: _storeInfo?.parkingInfo,
+                    ),
+                    SizedBox(height: 10),
+                    //세부 사항 예약
+                    ExpandInfoTile(
+                      title: '좌석',
+                      expandedInfo: _storeInfo?.seatsInfo,
+                    ),
+                  ],
                 ),
               ],
             ),

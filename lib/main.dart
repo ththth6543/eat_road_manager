@@ -233,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icons.settings,
               color: Colors.grey,
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => DraggableTabSheetExample()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Test()));
               },
             ),
           ],
