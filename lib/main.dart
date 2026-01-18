@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:eat_road_manager/create_store_marker.dart';
 import 'package:flutter/material.dart';
 import 'package:eat_road_manager/create_store/create_store_overview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,8 +9,9 @@ import 'store_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'create_store/create_store_others.dart';
-import 'create_store/create_store_check_document.dart';
 import 'test.dart';
+import 'package:eat_road_manager/create_store/create_store_business_registraion.dart';
+import 'package:eat_road_manager/create_store/create_store_business_license.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -156,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withAlpha(100),
                 spreadRadius: 1,
                 blurRadius: 5,
                 offset: const Offset(0, 3),
@@ -212,13 +212,15 @@ class _MyHomePageState extends State<MyHomePage> {
               title: '예약 관리',
               icon: Icons.calendar_today,
               color: Colors.green,
-              onTap: () { /* TODO: 예약 관리 화면으로 이동 */ },
+              onTap: () { Navigator.push(context, MaterialPageRoute(builder: (context) => const BusinessLicenseAuth())); },
             ),
             _createButton(
               title: '리뷰 관리',
               icon: Icons.rate_review,
               color: Colors.purpleAccent,
-              onTap: () { /* TODO: 리뷰 관리 화면으로 이동 */ },
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const BusinessRegiAuth()));
+              },
             ),
             _createButton(
               title: 'others',

@@ -93,7 +93,7 @@ class _AddressSearchViewState extends State<AddressSearchView> {
       _results = [];
     });
 
-    const String confmKey = 'devU01TX0FVVEgyMDI1MDkyMDAzMDQ1MzExNjIzOTY=';
+    const String confmKey = 'devU01TX0FVVEgyMDI1MTIyNjE4NTEzMjExNzM2NDY=';
     const String apiUrl = 'https://business.juso.go.kr/addrlink/addrLinkApi.do';
     final String url =
         '$apiUrl?confmKey=$confmKey&currentPage=1&countPerPage=100&keyword=${Uri.encodeComponent(keyword)}&resultType=json';

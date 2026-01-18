@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-class ExpandInfoTile extends StatefulWidget {
+class ExpandInfoTile extends StatelessWidget {
   final String title;
   final String? expandedInfo;
+  final IconData iconData;
+  final bool isExpanded;
+  final VoidCallback onTap;
 
   const ExpandInfoTile({
     super.key,
     required this.title,
     required this.expandedInfo,
+    required this.iconData,
+    required this.isExpanded,
+    required this.onTap,
   });
 
-  @override
-  State<ExpandInfoTile> createState() => _ExpandInfoTileState();
-}
-
-class _ExpandInfoTileState extends State<ExpandInfoTile> {
-  bool _isExpanded = false;
   static const Color mainColor = Color.fromRGBO(255, 143, 43, 1);
 
   @override
@@ -24,11 +24,7 @@ class _ExpandInfoTileState extends State<ExpandInfoTile> {
       children: [
         Material(
           child: InkWell(
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-            },
+            onTap: onTap,
             borderRadius: BorderRadius.circular(5),
             highlightColor: mainColor.withAlpha(200),
             splashColor: mainColor.withAlpha(120),
@@ -44,16 +40,22 @@ class _ExpandInfoTileState extends State<ExpandInfoTile> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      color: Colors.black.withAlpha(180),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Icon(iconData),
+                      SizedBox(width: 10),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: Colors.black.withAlpha(180),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   Icon(
-                    _isExpanded
+                    isExpanded
                         ? Icons.arrow_drop_up
                         : Icons.arrow_drop_down,
                     color: Colors.black.withAlpha(180),
@@ -80,9 +82,9 @@ class _ExpandInfoTileState extends State<ExpandInfoTile> {
                 bottomRight: Radius.circular(10),
               ),
             ),
-            child: Text(widget.expandedInfo ?? '정보 없음'),
+            child: Text(expandedInfo ?? '정보 없음'),
           ),
-          crossFadeState: _isExpanded
+          crossFadeState: isExpanded
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
           duration: Duration(milliseconds: 300),

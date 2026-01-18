@@ -1,4 +1,4 @@
-import 'package:eat_road_manager/detailed_store_screen_text_button.dart';
+import 'package:eat_road_manager/detailed_store/detailed_store_screen_text_button.dart';
 import 'package:flutter/material.dart';
 
 class BlockIcon extends StatelessWidget {
@@ -6,6 +6,10 @@ class BlockIcon extends StatelessWidget {
   final bool reservationAvailable;
   final bool wifiAvailable;
   final bool takeoutAvailable;
+  final VoidCallback? onParkingTap;
+  final VoidCallback? onReservationTap;
+  final VoidCallback? onWifiTap;
+  final VoidCallback? onTakeoutTap;
 
   const BlockIcon({
     super.key,
@@ -13,6 +17,10 @@ class BlockIcon extends StatelessWidget {
     required this.reservationAvailable,
     required this.wifiAvailable,
     required this.takeoutAvailable,
+    this.onParkingTap,
+    this.onReservationTap,
+    this.onWifiTap,
+    this.onTakeoutTap
   });
 
   static const mainColor = Color.fromRGBO(255, 143, 33, 1);
@@ -27,21 +35,21 @@ class BlockIcon extends StatelessWidget {
         child: Row(
           spacing: 10,
           children: [
-            buildBlockIcon(parkingAvailable, Icons.local_parking, '주차'),
-            buildBlockIcon(false, Icons.local_parking, '주차'),
-            buildBlockIcon(reservationAvailable, Icons.event_available, '예약'),
-            buildBlockIcon(false, Icons.event_available, '예약'),
-            buildBlockIcon(wifiAvailable, Icons.wifi, 'wifi'),
-            buildBlockIcon(false, Icons.wifi, 'wifi'),
-            buildBlockIcon(takeoutAvailable, Icons.food_bank, '포장'),
-            buildBlockIcon(false, Icons.food_bank, '포장'),
+            buildBlockIcon(parkingAvailable, Icons.local_parking, '주차', onTap: onParkingTap),
+            buildBlockIcon(false, Icons.local_parking, '주차', onTap: onParkingTap),
+            buildBlockIcon(reservationAvailable, Icons.event_available, '예약', onTap: onReservationTap),
+            buildBlockIcon(false, Icons.event_available, '예약', onTap: onReservationTap),
+            buildBlockIcon(wifiAvailable, Icons.wifi, 'wifi', onTap: onWifiTap),
+            buildBlockIcon(false, Icons.wifi, 'wifi', onTap: onWifiTap),
+            buildBlockIcon(takeoutAvailable, Icons.food_bank, '포장', onTap: onTakeoutTap),
+            buildBlockIcon(false, Icons.food_bank, '포장', onTap: onTakeoutTap),
           ],
         ),
       ),
     );
   }
 
-  Widget buildBlockIcon(bool isAvailable, IconData iconName, String label) {
+  Widget buildBlockIcon(bool isAvailable, IconData iconName, String label, {VoidCallback? onTap}) {
     var cannotParkIcon = Stack(
       children: [
         Icon(iconName, size: 25,),
@@ -54,7 +62,7 @@ class BlockIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         highlightColor: mainColor.withAlpha(150),
         splashColor: mainColor.withAlpha(120),
-        onTap: () {},
+        onTap: onTap,
         child: Container(
           width: 65,
           height: 65,

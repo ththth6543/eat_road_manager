@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:flutter/material.dart';
-import 'detailed_store_screen.dart';
+import 'detailed_store/detailed_store_screen.dart';
 
 //ios도 나중에 넣을 것
 import 'package:permission_handler/permission_handler.dart';
