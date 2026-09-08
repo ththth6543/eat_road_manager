@@ -1,4 +1,3 @@
-import 'package:eat_road_manager/detailed_store/detailed_store_screen_text_button.dart';
 import 'package:flutter/material.dart';
 
 class BlockIcon extends StatelessWidget {
@@ -20,7 +19,7 @@ class BlockIcon extends StatelessWidget {
     this.onParkingTap,
     this.onReservationTap,
     this.onWifiTap,
-    this.onTakeoutTap
+    this.onTakeoutTap,
   });
 
   static const mainColor = Color.fromRGBO(255, 143, 33, 1);
@@ -35,13 +34,38 @@ class BlockIcon extends StatelessWidget {
         child: Row(
           spacing: 10,
           children: [
-            buildBlockIcon(parkingAvailable, Icons.local_parking, '주차', onTap: onParkingTap),
-            buildBlockIcon(false, Icons.local_parking, '주차', onTap: onParkingTap),
-            buildBlockIcon(reservationAvailable, Icons.event_available, '예약', onTap: onReservationTap),
-            buildBlockIcon(false, Icons.event_available, '예약', onTap: onReservationTap),
+            buildBlockIcon(
+              parkingAvailable,
+              Icons.local_parking,
+              '주차',
+              onTap: onParkingTap,
+            ),
+            buildBlockIcon(
+              false,
+              Icons.local_parking,
+              '주차',
+              onTap: onParkingTap,
+            ),
+            buildBlockIcon(
+              reservationAvailable,
+              Icons.event_available,
+              '예약',
+              onTap: onReservationTap,
+            ),
+            buildBlockIcon(
+              false,
+              Icons.event_available,
+              '예약',
+              onTap: onReservationTap,
+            ),
             buildBlockIcon(wifiAvailable, Icons.wifi, 'wifi', onTap: onWifiTap),
             buildBlockIcon(false, Icons.wifi, 'wifi', onTap: onWifiTap),
-            buildBlockIcon(takeoutAvailable, Icons.food_bank, '포장', onTap: onTakeoutTap),
+            buildBlockIcon(
+              takeoutAvailable,
+              Icons.food_bank,
+              '포장',
+              onTap: onTakeoutTap,
+            ),
             buildBlockIcon(false, Icons.food_bank, '포장', onTap: onTakeoutTap),
           ],
         ),
@@ -49,10 +73,15 @@ class BlockIcon extends StatelessWidget {
     );
   }
 
-  Widget buildBlockIcon(bool isAvailable, IconData iconName, String label, {VoidCallback? onTap}) {
+  Widget buildBlockIcon(
+    bool isAvailable,
+    IconData iconName,
+    String label, {
+    VoidCallback? onTap,
+  }) {
     var cannotParkIcon = Stack(
       children: [
-        Icon(iconName, size: 25,),
+        Icon(iconName, size: 25),
         Icon(Icons.close, color: Colors.red, size: 25),
       ],
     );
@@ -75,7 +104,7 @@ class BlockIcon extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                isAvailable ? Icon(iconName, size: 25,) : cannotParkIcon,
+                isAvailable ? Icon(iconName, size: 25) : cannotParkIcon,
                 //cannotParkIcon,
                 SizedBox(height: 5),
                 RichText(
@@ -83,15 +112,15 @@ class BlockIcon extends StatelessWidget {
                     style: TextStyle(fontSize: 14, color: Colors.black),
                     children: <TextSpan>[
                       TextSpan(text: '$label '),
-                      isAvailable ?
-                      TextSpan(
-                        text: 'O',
-                        style: TextStyle(color: Colors.blueAccent),
-                      ) :
-                      TextSpan(
-                        text: 'X',
-                        style: TextStyle(color: Colors.redAccent),
-                      )
+                      isAvailable
+                          ? TextSpan(
+                              text: 'O',
+                              style: TextStyle(color: Colors.blueAccent),
+                            )
+                          : TextSpan(
+                              text: 'X',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
                     ],
                   ),
                 ),

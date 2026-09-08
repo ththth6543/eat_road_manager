@@ -44,3 +44,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 lib/test.dart
+
+# Environment variables
+.env
+.env.*
+!.env.example

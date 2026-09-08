@@ -9,7 +9,7 @@ class IconTextButton extends StatelessWidget {
     super.key,
     required this.icon,
     required this.text,
-    this.onPressed
+    this.onPressed,
   });
 
   @override
@@ -23,18 +23,13 @@ class IconTextButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             color: Color.fromRGBO(255, 143, 33, 0.2),
           ),
-          child: Icon(
-            icon,
-            color: Color.fromRGBO(255, 143, 33, 1),
-          ),),
+          child: Icon(icon, color: Color.fromRGBO(255, 143, 33, 1)),
+        ),
         Flexible(
           child: TextButton(
             onPressed: onPressed,
             style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 5,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
               alignment: Alignment.centerLeft,
             ),
             child: Text(

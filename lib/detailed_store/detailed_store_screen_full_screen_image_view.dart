@@ -79,7 +79,11 @@ class _DetailedStoreScreenFullScreenImageViewState
               },
               errorBuilder: (context, error, stackTrace) {
                 return const Center(
-                  child: Icon(Icons.broken_image, size: 50, color: Colors.white,),
+                  child: Icon(
+                    Icons.broken_image,
+                    size: 50,
+                    color: Colors.white,
+                  ),
                 );
               },
             ),
