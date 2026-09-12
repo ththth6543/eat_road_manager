@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../test.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../create_store/business_license_screen.dart';
 import '../create_store/business_registration_screen.dart';
@@ -177,9 +176,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.settings,
                       color: AppColors.grey,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const Test()),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('설정 기능 준비 중입니다.')),
                         );
                       },
                     ),
