@@ -50,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _createButton({
     required String title,
+    String? subtitle,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(15),
@@ -68,23 +69,36 @@ class _HomeScreenState extends State<HomeScreen> {
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 3),
-            )
+            ),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: Colors.white),
-            const SizedBox(height: 10),
+            Icon(icon, size: 36, color: Colors.white),
+            const SizedBox(height: 8),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withAlpha(220),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -110,16 +124,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
+                  childAspectRatio: 1.05,
                   children: <Widget>[
                     _createButton(
                       title: '가게 등록 / 수정',
+                      subtitle: '소개 · 메뉴 · 위치 등록',
                       icon: Icons.add_business,
                       color: AppColors.accentBlue,
                       onTap: _handleNavigateToCreateStore,
                     ),
                     _createButton(
-                      title: '내 가게 목록',
-                      icon: Icons.store,
+                      title: '주변 가게 지도',
+                      subtitle: '내 주변 가게 마커 확인',
+                      icon: Icons.map_outlined,
                       color: Colors.orangeAccent,
                       onTap: () {
                         Navigator.push(
@@ -131,8 +148,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     _createButton(
-                      title: '예약 관리',
-                      icon: Icons.calendar_today,
+                      title: '영업 허가증 인증',
+                      subtitle: '식품안전나라 인허가 조회',
+                      icon: Icons.verified_outlined,
                       color: AppColors.accentGreen,
                       onTap: () {
                         Navigator.push(
@@ -144,8 +162,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     _createButton(
-                      title: '리뷰 관리',
-                      icon: Icons.rate_review,
+                      title: '사업자등록 인증',
+                      subtitle: '국세청 사업자 진위 확인',
+                      icon: Icons.badge_outlined,
                       color: AppColors.accentPurple,
                       onTap: () {
                         Navigator.push(
@@ -158,8 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                     _createButton(
-                      title: 'others',
-                      icon: Icons.bar_chart,
+                      title: '영업 및 편의 정보',
+                      subtitle: '영업시간 · 편의시설 관리',
+                      icon: Icons.access_time_filled,
                       color: AppColors.accentRed,
                       onTap: () {
                         Navigator.push(
@@ -173,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     _createButton(
                       title: '설정',
+                      subtitle: '앱 환경설정 및 관리',
                       icon: Icons.settings,
                       color: AppColors.grey,
                       onTap: () {
@@ -188,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   color: Colors.black38,
                   child: const Center(
-                    child: CircularProgressIndicator(color: AppColors.accentBlue),
+                    child: CircularProgressIndicator(
+                      color: AppColors.accentBlue,
+                    ),
                   ),
                 ),
             ],

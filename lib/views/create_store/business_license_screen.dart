@@ -34,15 +34,19 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("인증 실패",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            "인증 실패",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(_viewModel.errorMessage!),
           actions: [
             TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.black),
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("확인",
-                  style: TextStyle(color: AppColors.accentBlue)),
+              child: const Text(
+                "확인",
+                style: TextStyle(color: AppColors.accentBlue),
+              ),
             ),
           ],
         ),
@@ -90,7 +94,10 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTextField(
-                    '인허가 번호 (- 제외)', _searchController, TextInputType.number),
+                  '인허가 번호 (- 제외)',
+                  _searchController,
+                  TextInputType.number,
+                ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -98,7 +105,8 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 55),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5)),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: _viewModel.isLoading ? null : _handleSearch,
@@ -114,7 +122,9 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
                       : const Text(
                           "검색 시작",
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
                 const SizedBox(height: 25),
@@ -134,8 +144,8 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
                           itemBuilder: (ctx, index) {
                             final item = _viewModel.searchResults[index];
                             final String? entDtRaw = item['CLSBIZ_DT'];
-                            final bool isClosed = entDtRaw != null &&
-                                entDtRaw.trim().isNotEmpty;
+                            final bool isClosed =
+                                entDtRaw != null && entDtRaw.trim().isNotEmpty;
                             final bool isLive = !isClosed;
 
                             return Card(
@@ -149,7 +159,8 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
                                 title: Text(
                                   item['BSSH_NM'] ?? '상호명 미기재',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +190,7 @@ class _BusinessLicenseScreenState extends State<BusinessLicenseScreen> {
                                 ),
                                 onTap: isLive
                                     ? () {
-                                        debugPrint(
-                                            "${item['BSSH_NM']} 선택됨");
+                                        debugPrint("${item['BSSH_NM']} 선택됨");
                                       }
                                     : null,
                               ),

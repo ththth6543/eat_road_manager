@@ -10,7 +10,7 @@ class BusinessRegistrationViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   BusinessRegistrationViewModel({VerificationRepository? repository})
-      : _repository = repository ?? VerificationRepository();
+    : _repository = repository ?? VerificationRepository();
 
   bool get isLoading => _isLoading;
   bool get isSuccess => _isSuccess;
@@ -62,7 +62,7 @@ class BusinessLicenseViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   BusinessLicenseViewModel({VerificationRepository? repository})
-      : _repository = repository ?? VerificationRepository();
+    : _repository = repository ?? VerificationRepository();
 
   bool get isLoading => _isLoading;
   List<dynamic> get searchResults => _searchResults;
@@ -105,7 +105,7 @@ class AddressSearchViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   AddressSearchViewModel({VerificationRepository? repository})
-      : _repository = repository ?? VerificationRepository();
+    : _repository = repository ?? VerificationRepository();
 
   bool get isLoading => _isLoading;
   bool get hasSearched => _hasSearched;

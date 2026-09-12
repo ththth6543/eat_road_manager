@@ -7,24 +7,25 @@ void main() {
   group('MVVM Model Tests', () {
     test('Store model fromMap and toMap', () {
       final map = {
-        'id': 101,
+        'store_id': '550e8400-e29b-41d4-a716-446655440000',
         'name': '맛있는 식당',
         'latitude': 37.5665,
         'longitude': 126.9780,
-        'bdMgtSn': '1111010100100010000000001',
-        'road_address': '서울특별시 중구 세종대로 110',
+        'bd_mgt_sn': '1111010100100010000000001',
+        'road_addr': '서울특별시 중구 세종대로 110',
       };
 
       final store = Store.fromMap(map);
-      expect(store.id, 101);
+      expect(store.id, '550e8400-e29b-41d4-a716-446655440000');
       expect(store.name, '맛있는 식당');
       expect(store.latitude, 37.5665);
       expect(store.longitude, 126.9780);
       expect(store.roadAddress, '서울특별시 중구 세종대로 110');
 
       final serialized = store.toMap();
-      expect(serialized['id'], 101);
+      expect(serialized['store_id'], '550e8400-e29b-41d4-a716-446655440000');
       expect(serialized['name'], '맛있는 식당');
+      expect(serialized['road_addr'], '서울특별시 중구 세종대로 110');
     });
 
     test('MenuItem model serialization', () {

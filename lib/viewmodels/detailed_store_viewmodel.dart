@@ -8,7 +8,7 @@ class DetailedStoreViewModel extends ChangeNotifier {
   final StoreRepository _storeRepository;
   final MenuRepository _menuRepository;
 
-  final int storeId;
+  final String storeId;
   StoreInfo? _storeInfo;
   List<MenuItem>? _menus;
 

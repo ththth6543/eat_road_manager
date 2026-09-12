@@ -26,9 +26,9 @@ class CreateStoreMarkerViewModel extends ChangeNotifier {
     required this.storeId,
     StoreRepository? storeRepository,
     VerificationRepository? verificationRepository,
-  })  : _storeRepository = storeRepository ?? StoreRepository(),
-        _verificationRepository =
-            verificationRepository ?? VerificationRepository();
+  }) : _storeRepository = storeRepository ?? StoreRepository(),
+       _verificationRepository =
+           verificationRepository ?? VerificationRepository();
 
   MarkerCreationStep get step => _step;
   bool get hasPermission => _hasPermission;
@@ -66,8 +66,55 @@ class CreateStoreMarkerViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final coords =
-          await _verificationRepository.geocodeAddress(address.roadAddr);
+      NLatLng? coords;
+
+      // 0. 검색 결과에 이미 정확한 좌표가 포함되어 있는 경우 즉시 사용
+      if (address.latitude != null && address.longitude != null) {
+        coords = NLatLng(address.latitude!, address.longitude!);
+        debugPrint('주소 객체에 포함된 네이버 좌표 즉시 사용: $coords');
+      }
+
+      // 1. 원본 도로명 주소로 시도
+      if (coords == null && address.roadAddr.isNotEmpty) {
+        coords = await _verificationRepository.geocodeAddress(address.roadAddr);
+      }
+
+      // 2. 괄호 참고항목(동/건물명) 제거 후 시도 (예: "테헤란로 152 (역삼동)" -> "테헤란로 152")
+      if (coords == null && address.roadAddr.contains('(')) {
+        final cleanRoad = address.roadAddr
+            .replaceAll(RegExp(r'\(.*?\)'), '')
+            .trim();
+        if (cleanRoad.isNotEmpty) {
+          coords = await _verificationRepository.geocodeAddress(cleanRoad);
+        }
+      }
+
+      // 3. 지번 주소로 시도
+      if (coords == null && address.jibunAddr.isNotEmpty) {
+        coords = await _verificationRepository.geocodeAddress(
+          address.jibunAddr,
+        );
+      }
+
+      // 4. 지번 주소 괄호 제거 후 시도
+      if (coords == null && address.jibunAddr.contains('(')) {
+        final cleanJibun = address.jibunAddr
+            .replaceAll(RegExp(r'\(.*?\)'), '')
+            .trim();
+        if (cleanJibun.isNotEmpty) {
+          coords = await _verificationRepository.geocodeAddress(cleanJibun);
+        }
+      }
+
+      // 5. 시/도 + 시/군/구 + 읍/면/동 지역명으로 시도 (최소 위치 보장)
+      if (coords == null) {
+        final areaName = '${address.siNm} ${address.sggNm} ${address.emdNm}'
+            .trim();
+        if (areaName.isNotEmpty) {
+          coords = await _verificationRepository.geocodeAddress(areaName);
+        }
+      }
+
       if (coords != null) {
         _selectedAddress = address;
         _initialCoordinates = coords;
@@ -77,7 +124,8 @@ class CreateStoreMarkerViewModel extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        _errorMessage = '입력하신 주소의 좌표를 찾을 수 없습니다.';
+        _errorMessage =
+            '선택하신 주소의 지도 좌표를 찾을 수 없습니다.\n잠시 후 다시 시도하시거나 도로명/지번을 확인해 주세요.';
         _isLoading = false;
         notifyListeners();
         return false;

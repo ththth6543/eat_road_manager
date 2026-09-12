@@ -1,5 +1,5 @@
 class Store {
-  final int id;
+  final String id;
   final String name;
   final double latitude;
   final double longitude;
@@ -17,23 +17,23 @@ class Store {
 
   factory Store.fromMap(Map<String, dynamic> map) {
     return Store(
-      id: map['id'] is int ? map['id'] : int.parse(map['id'].toString()),
+      id: map['store_id'].toString(),
       name: map['name'] ?? '이름 없음',
       latitude: (map['latitude'] as num).toDouble(),
       longitude: (map['longitude'] as num).toDouble(),
-      bdMgtSn: map['bdMgtSn'],
-      roadAddress: map['road_address'] ?? map['roadAddress'],
+      bdMgtSn: map['bd_mgt_sn'],
+      roadAddress: map['road_addr'] ?? map['road_address'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'store_id': id,
       'name': name,
       'latitude': latitude,
       'longitude': longitude,
-      'bdMgtSn': bdMgtSn,
-      'road_address': roadAddress,
+      'bd_mgt_sn': bdMgtSn,
+      'road_addr': roadAddress,
     };
   }
 }

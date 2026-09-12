@@ -55,9 +55,9 @@ class _CreateStoreOverviewScreenState extends State<CreateStoreOverviewScreen> {
         ),
       );
     } else if (mounted && _viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_viewModel.errorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
     }
   }
 
@@ -133,10 +133,10 @@ class _CreateStoreOverviewScreenState extends State<CreateStoreOverviewScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                       itemCount: imageUrls.length + 1,
                       itemBuilder: (context, index) {
                         if (index == imageUrls.length) {
@@ -162,10 +162,7 @@ class _CreateStoreOverviewScreenState extends State<CreateStoreOverviewScreen> {
                         return Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                            ),
+                            Image.network(imageUrl, fit: BoxFit.cover),
                             Positioned(
                               top: 4,
                               right: 4,

@@ -44,15 +44,19 @@ class _BusinessRegistrationScreenState
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("인증 실패",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            "인증 실패",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(_viewModel.errorMessage!),
           actions: [
             TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.black),
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("확인",
-                  style: TextStyle(color: AppColors.accentBlue)),
+              child: const Text(
+                "확인",
+                style: TextStyle(color: AppColors.accentBlue),
+              ),
             ),
           ],
         ),
@@ -81,10 +85,7 @@ class _BusinessRegistrationScreenState
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
-          borderSide: const BorderSide(
-            color: AppColors.accentBlue,
-            width: 3.0,
-          ),
+          borderSide: const BorderSide(color: AppColors.accentBlue, width: 3.0),
         ),
       ),
     );
@@ -103,13 +104,18 @@ class _BusinessRegistrationScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTextField(
-                    '사업자등록번호 (- 제외)', bNoController, TextInputType.number),
+                  '사업자등록번호 (- 제외)',
+                  bNoController,
+                  TextInputType.number,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
-                    '개업일자 (예: 20230101)', dateController, TextInputType.number),
+                  '개업일자 (예: 20230101)',
+                  dateController,
+                  TextInputType.number,
+                ),
                 const SizedBox(height: 12),
-                _buildTextField(
-                    '대표자 성명', nameController, TextInputType.text),
+                _buildTextField('대표자 성명', nameController, TextInputType.text),
                 const SizedBox(height: 12),
                 if (_viewModel.isSuccess)
                   const Text(

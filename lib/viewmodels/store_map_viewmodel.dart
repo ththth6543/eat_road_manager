@@ -22,7 +22,7 @@ class StoreMapViewModel extends ChangeNotifier {
   String? _selectedMarkerIdForInfoWindow;
 
   // Detailed sheet state
-  int? _selectedStoreIdForSheet;
+  String? _selectedStoreIdForSheet;
 
   StoreMapViewModel({StoreRepository? storeRepository})
     : _storeRepository = storeRepository ?? StoreRepository();
@@ -37,7 +37,7 @@ class StoreMapViewModel extends ChangeNotifier {
   List<Store>? get selectedStoresForInfoWindow => _selectedStoresForInfoWindow;
   Offset? get infoWindowOffset => _infoWindowOffset;
   String? get selectedMarkerIdForInfoWindow => _selectedMarkerIdForInfoWindow;
-  int? get selectedStoreIdForSheet => _selectedStoreIdForSheet;
+  String? get selectedStoreIdForSheet => _selectedStoreIdForSheet;
 
   /// Initialize location and load nearby stores
   Future<void> initialize() async {
@@ -89,7 +89,7 @@ class StoreMapViewModel extends ChangeNotifier {
     }
   }
 
-  void showDetailedScreen(int storeId) {
+  void showDetailedScreen(String storeId) {
     closeInfoWindow();
     _selectedStoreIdForSheet = storeId;
     notifyListeners();

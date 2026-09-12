@@ -5,7 +5,7 @@ import '../../../models/store.dart';
 class StoreInfoWindow extends StatelessWidget {
   final List<Store> stores;
   final Offset offset;
-  final ValueChanged<int> onStoreSelected;
+  final ValueChanged<String> onStoreSelected;
 
   const StoreInfoWindow({
     super.key,

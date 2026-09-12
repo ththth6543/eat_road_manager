@@ -9,7 +9,7 @@ class AuthViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   AuthViewModel({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepository();
+    : _authRepository = authRepository ?? AuthRepository();
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;

@@ -5,7 +5,7 @@ import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/constants/api_constants.dart';
-import 'core/constants/app_colors.dart';
+import 'core/theme/app_theme.dart';
 import 'core/network/supabase_client.dart';
 import 'views/home/home_screen.dart';
 
@@ -28,8 +28,8 @@ void main() async {
           debugPrint("사용량 초과 (message: $message)");
           break;
         case NUnauthorizedClientException() ||
-              NClientUnspecifiedException() ||
-              NAuthFailedException():
+            NClientUnspecifiedException() ||
+            NAuthFailedException():
           debugPrint("인증 실패: $ex");
           break;
       }
@@ -53,10 +53,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '잇로드 매니저',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       // 한글 및 기타 언어 설정을 위한 localizationsDelegates 추가
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -80,6 +77,19 @@ class MyApp extends StatelessWidget {
           return const HomeScreen();
         },
       ),
+      onGenerateRoute: (settings) {
+        // Supabase OAuth 로그인 콜백 (예: /?code=...) 및 딥링크 처리
+        return MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+          settings: settings,
+        );
+      },
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+          settings: settings,
+        );
+      },
     );
   }
 }

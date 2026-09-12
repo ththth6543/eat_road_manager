@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:nanoid2/nanoid2.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/network/supabase_client.dart';
 import '../models/store.dart';
@@ -20,11 +21,7 @@ class StoreRepository {
       final List<dynamic> result = await _client
           .rpc(
             'nearby_stores',
-            params: {
-              'lat': latitude,
-              'long': longitude,
-              'radius_m': radiusM,
-            },
+            params: {'lat': latitude, 'long': longitude, 'radius_m': radiusM},
           )
           .timeout(timeout);
 
@@ -43,19 +40,25 @@ class StoreRepository {
   Future<String> getOrCreateDraftStore(String userId) async {
     final List<dynamic> drafts = await _client
         .from('stores')
-        .select('id')
+        .select('store_id')
         .eq('owner_id', userId)
         .eq('status', 'DRAFT');
 
     if (drafts.isNotEmpty) {
-      return drafts.first['id'].toString();
+      return drafts.first['store_id'].toString();
     } else {
+      final storeId = nanoid();
       final newData = await _client
           .from('stores')
-          .insert({'owner_id': userId, 'name': '임시 가게', 'status': 'DRAFT'})
-          .select('id')
+          .insert({
+            'store_id': storeId,
+            'owner_id': userId,
+            'name': '임시 가게',
+            'status': 'DRAFT',
+          })
+          .select('store_id')
           .single();
-      return newData['id'].toString();
+      return newData['store_id'].toString();
     }
   }
 
@@ -64,7 +67,7 @@ class StoreRepository {
     final data = await _client
         .from('stores')
         .select()
-        .eq('id', storeId)
+        .eq('store_id', storeId)
         .single();
     return StoreInfo.fromMap(data);
   }
@@ -74,7 +77,7 @@ class StoreRepository {
     final data = await _client
         .from('stores')
         .select('name, description, image_urls')
-        .eq('id', storeId)
+        .eq('store_id', storeId)
         .single();
     return data;
   }
@@ -86,11 +89,14 @@ class StoreRepository {
     required String description,
     required List<String> imageUrls,
   }) async {
-    await _client.from('stores').update({
-      'name': name,
-      'description': description,
-      'image_urls': imageUrls,
-    }).eq('id', storeId);
+    await _client
+        .from('stores')
+        .update({
+          'name': name,
+          'description': description,
+          'image_urls': imageUrls,
+        })
+        .eq('store_id', storeId);
   }
 
   /// Update store location coordinates & road address
@@ -108,15 +114,15 @@ class StoreRepository {
     final updateData = <String, dynamic>{
       'latitude': latitude,
       'longitude': longitude,
-      'road_address': roadAddress,
-      if (bdMgtSn != null) 'bdMgtSn': bdMgtSn,
-      if (jibunAddr != null) 'jibun_address': jibunAddr,
-      if (siNm != null) 'siNm': siNm,
-      if (sggNm != null) 'sggNm': sggNm,
-      if (emdNm != null) 'emdNm': emdNm,
+      'road_addr': roadAddress,
+      if (bdMgtSn != null) 'bd_mgt_sn': bdMgtSn,
+      if (jibunAddr != null) 'jibun_addr': jibunAddr,
+      if (siNm != null) 'si_nm': siNm,
+      if (sggNm != null) 'sgg_nm': sggNm,
+      if (emdNm != null) 'emd_nm': emdNm,
     };
 
-    await _client.from('stores').update(updateData).eq('id', storeId);
+    await _client.from('stores').update(updateData).eq('store_id', storeId);
   }
 
   /// Update store operational details (business days, hours, amenities)
@@ -124,6 +130,6 @@ class StoreRepository {
     required dynamic storeId,
     required Map<String, dynamic> data,
   }) async {
-    await _client.from('stores').update(data).eq('id', storeId);
+    await _client.from('stores').update(data).eq('store_id', storeId);
   }
 }

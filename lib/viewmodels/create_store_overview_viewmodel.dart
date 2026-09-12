@@ -24,8 +24,8 @@ class CreateStoreOverviewViewModel extends ChangeNotifier {
     required this.storeId,
     StoreRepository? storeRepository,
     AuthRepository? authRepository,
-  })  : _storeRepository = storeRepository ?? StoreRepository(),
-        _authRepository = authRepository ?? AuthRepository();
+  }) : _storeRepository = storeRepository ?? StoreRepository(),
+       _authRepository = authRepository ?? AuthRepository();
 
   String get storeName => _storeName;
   String get description => _description;
@@ -61,9 +61,15 @@ class CreateStoreOverviewViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final filePath = StorageService.extractFilePathFromUrl(imageUrl, 'stores');
+      final filePath = StorageService.extractFilePathFromUrl(
+        imageUrl,
+        'stores',
+      );
       if (filePath != null) {
-        await StorageService.removeFiles(bucket: 'stores', filePaths: [filePath]);
+        await StorageService.removeFiles(
+          bucket: 'stores',
+          filePaths: [filePath],
+        );
       }
 
       _imageUrls.removeAt(index);

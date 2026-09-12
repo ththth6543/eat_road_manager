@@ -29,7 +29,8 @@ class MenuRepository {
     required File file,
     required String fileName,
   }) async {
-    final filePath = 'menu_images/$userId/$storeId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final filePath =
+        'menu_images/$userId/$storeId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
     return await StorageService.uploadFile(
       bucket: 'menus',
       filePath: filePath,
@@ -48,7 +49,9 @@ class MenuRepository {
       try {
         await StorageService.removeFiles(bucket: 'menus', filePaths: filePaths);
       } catch (e) {
-        debugPrint('Failed to batch delete menu images: $e. Retrying one-by-one.');
+        debugPrint(
+          'Failed to batch delete menu images: $e. Retrying one-by-one.',
+        );
         for (final p in filePaths) {
           try {
             await StorageService.removeFiles(bucket: 'menus', filePaths: [p]);

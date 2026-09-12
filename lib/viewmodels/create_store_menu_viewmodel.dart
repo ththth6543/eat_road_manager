@@ -11,6 +11,7 @@ class MenuFormItem {
   final TextEditingController descriptionController;
   XFile? newImageFile;
   String? existingImageUrl;
+  bool isImageRemoved = false;
 
   MenuFormItem({
     this.dbId,
@@ -19,10 +20,16 @@ class MenuFormItem {
     String? description,
     this.existingImageUrl,
   }) : nameController = TextEditingController(text: name ?? ''),
-       priceController = TextEditingController(text: price?.toString() ?? ''),
+       priceController = TextEditingController(
+         text: price != null ? price.toString() : '',
+       ),
        descriptionController = TextEditingController(text: description ?? '');
 
   bool get isPersisted => dbId != null;
+
+  bool get hasImage =>
+      newImageFile != null ||
+      (existingImageUrl != null && existingImageUrl!.isNotEmpty);
 
   ImageProvider? get imageProvider {
     if (newImageFile != null) return FileImage(File(newImageFile!.path));
@@ -61,6 +68,9 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
+
+  int get validMenuCount =>
+      _menuItems.where((m) => m.nameController.text.trim().isNotEmpty).length;
 
   Future<void> loadExistingMenus() async {
     _isLoading = true;
@@ -111,8 +121,58 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
     );
     if (pickedFile != null && index >= 0 && index < _menuItems.length) {
       _menuItems[index].newImageFile = pickedFile;
+      _menuItems[index].isImageRemoved = false;
       notifyListeners();
     }
+  }
+
+  void removeImage(int index) {
+    if (index >= 0 && index < _menuItems.length) {
+      _menuItems[index].newImageFile = null;
+      _menuItems[index].existingImageUrl = null;
+      _menuItems[index].isImageRemoved = true;
+      notifyListeners();
+    }
+  }
+
+  bool validateMenus() {
+    if (_menuItems.isEmpty) {
+      _errorMessage = '메뉴를 최소 1개 이상 추가해 주세요.';
+      notifyListeners();
+      return false;
+    }
+
+    bool hasAnyValid = false;
+    for (int i = 0; i < _menuItems.length; i++) {
+      final item = _menuItems[i];
+      final name = item.nameController.text.trim();
+      final priceStr = item.priceController.text.replaceAll(',', '').trim();
+      final hasOtherContent =
+          priceStr.isNotEmpty ||
+          item.descriptionController.text.trim().isNotEmpty ||
+          item.newImageFile != null;
+
+      if (name.isNotEmpty) {
+        if (priceStr.isEmpty) {
+          _errorMessage = '${i + 1}번째 메뉴($name)의 가격을 입력해 주세요.';
+          notifyListeners();
+          return false;
+        }
+        hasAnyValid = true;
+      } else if (hasOtherContent) {
+        _errorMessage = '${i + 1}번째 메뉴의 이름을 입력해 주세요.';
+        notifyListeners();
+        return false;
+      }
+    }
+
+    if (!hasAnyValid) {
+      _errorMessage = '최소 1개 이상의 메뉴 정보를 입력해 주세요.';
+      notifyListeners();
+      return false;
+    }
+
+    return true;
   }
 
   Future<bool> saveAllMenus() async {
@@ -123,6 +183,10 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
       return false;
     }
 
+    if (!validateMenus()) {
+      return false;
+    }
+
     _isSaving = true;
     _errorMessage = null;
     notifyListeners();
@@ -130,7 +194,11 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
     try {
       final existingMenus = await _menuRepository.fetchMenusByStoreId(storeId);
       final oldMenusMap = {for (var v in existingMenus) v.id: v};
-      final newMenusMap = {for (var v in _menuItems) v.dbId: v};
+      // Only persist non-empty items
+      final activeItems = _menuItems
+          .where((m) => m.nameController.text.trim().isNotEmpty)
+          .toList();
+      final newMenusMap = {for (var v in activeItems) v.dbId: v};
 
       final List<String> idsToDelete = [];
       final List<String> storageFilesToDelete = [];
@@ -148,7 +216,7 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
       final List<Map<String, dynamic>> recordsToInsert = [];
       final List<Map<String, dynamic>> recordsToUpdate = [];
 
-      for (final item in _menuItems) {
+      for (final item in activeItems) {
         String? imageUrl = item.existingImageUrl;
         if (item.newImageFile != null) {
           imageUrl = await _menuRepository.uploadMenuImage(
@@ -157,14 +225,20 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
             file: File(item.newImageFile!.path),
             fileName: item.newImageFile!.name,
           );
+        } else if (item.isImageRemoved) {
+          imageUrl = null;
         }
 
         final record = {
           'store_id': storeId,
           'user_id': userId,
-          'name': item.nameController.text,
-          'price': int.tryParse(item.priceController.text) ?? 0,
-          'description': item.descriptionController.text,
+          'name': item.nameController.text.trim(),
+          'price':
+              int.tryParse(
+                item.priceController.text.replaceAll(',', '').trim(),
+              ) ??
+              0,
+          'description': item.descriptionController.text.trim(),
           'image_url': imageUrl,
         };
 
@@ -173,7 +247,7 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
         } else {
           final oldItem = oldMenusMap[item.dbId];
           if (oldItem != null) {
-            if (item.newImageFile != null &&
+            if ((item.newImageFile != null || item.isImageRemoved) &&
                 oldItem.imageUrl != null &&
                 oldItem.imageUrl!.isNotEmpty) {
               storageFilesToDelete.add(oldItem.imageUrl!);
@@ -201,6 +275,7 @@ class CreateStoreMenuViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      debugPrint('메뉴 저장 중 오류 발생: $e');
       _errorMessage = '메뉴 저장 중 오류 발생: $e';
       _isSaving = false;
       notifyListeners();

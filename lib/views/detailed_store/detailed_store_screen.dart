@@ -6,7 +6,7 @@ import 'tabs/detailed_store_menu_tab.dart';
 import 'tabs/detailed_store_review_tab.dart';
 
 class DetailedStoreScreen extends StatefulWidget {
-  final int storeId;
+  final String storeId;
   final VoidCallback onClose;
 
   const DetailedStoreScreen({

@@ -12,8 +12,8 @@ class HomeViewModel extends ChangeNotifier {
   HomeViewModel({
     AuthRepository? authRepository,
     StoreRepository? storeRepository,
-  })  : _authRepository = authRepository ?? AuthRepository(),
-        _storeRepository = storeRepository ?? StoreRepository();
+  }) : _authRepository = authRepository ?? AuthRepository(),
+       _storeRepository = storeRepository ?? StoreRepository();
 
   bool get isCreatingStore => _isCreatingStore;
   String? get errorMessage => _errorMessage;

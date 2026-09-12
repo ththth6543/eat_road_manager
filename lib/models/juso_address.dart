@@ -6,6 +6,8 @@ class JusoAddress {
   final String emdNm; // 읍면동명
   final String liNm; // 법정리명
   final String bdMgtSn; // 건물 관리 번호
+  final double? latitude; // 위도 (y)
+  final double? longitude; // 경도 (x)
 
   JusoAddress({
     required this.roadAddr,
@@ -15,6 +17,8 @@ class JusoAddress {
     required this.emdNm,
     required this.liNm,
     required this.bdMgtSn,
+    this.latitude,
+    this.longitude,
   });
 
   factory JusoAddress.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class JusoAddress {
       emdNm: json['emdNm'] ?? '',
       liNm: json['liNm'] ?? '',
       bdMgtSn: json['bdMgtSn'] ?? '',
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
     );
   }
 
@@ -38,6 +44,8 @@ class JusoAddress {
       'emdNm': emdNm,
       'liNm': liNm,
       'bdMgtSn': bdMgtSn,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 }

@@ -4,7 +4,7 @@ import '../../../viewmodels/detailed_store_viewmodel.dart';
 import '../widgets/detailed_store_menu_detail.dart';
 
 class MenuTab extends StatefulWidget {
-  final int storeId;
+  final String storeId;
   final ScrollController scrollController;
   final DetailedStoreViewModel? viewModel;
 

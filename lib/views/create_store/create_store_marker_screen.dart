@@ -58,9 +58,9 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
           NCameraUpdate.withParams(target: coords, zoom: 16),
         );
       } else if (_viewModel.errorMessage != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_viewModel.errorMessage!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
       }
     }
   }
@@ -89,13 +89,14 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CreateStoreOthersScreen(storeId: widget.storeId),
+          builder: (context) =>
+              CreateStoreOthersScreen(storeId: widget.storeId),
         ),
       );
     } else if (_viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_viewModel.errorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_viewModel.errorMessage!)));
     }
   }
 
@@ -115,9 +116,7 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
       case MarkerCreationStep.fineTuning:
         return Stack(
           children: [
-            const Center(
-              child: Icon(Icons.add, size: 30, color: Colors.black),
-            ),
+            const Center(child: Icon(Icons.add, size: 30, color: Colors.black)),
             Positioned(
               top: 0,
               left: 0,
@@ -147,8 +146,7 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
           ],
         );
       case MarkerCreationStep.confirmed:
-        final roadAddress =
-            _viewModel.selectedAddress?.roadAddr ?? '주소 정보 없음';
+        final roadAddress = _viewModel.selectedAddress?.roadAddr ?? '주소 정보 없음';
         return Positioned(
           bottom: 0,
           left: 0,
@@ -160,13 +158,17 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(roadAddress,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    roadAddress,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                      '위도: ${_viewModel.finalCoordinates?.latitude.toStringAsFixed(5)}'),
+                    '위도: ${_viewModel.finalCoordinates?.latitude.toStringAsFixed(5)}',
+                  ),
                   Text(
-                      '경도: ${_viewModel.finalCoordinates?.longitude.toStringAsFixed(5)}'),
+                    '경도: ${_viewModel.finalCoordinates?.longitude.toStringAsFixed(5)}',
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -177,7 +179,9 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(color: Colors.white),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
                           )
                         : const Text('가게 위치 저장 후 다음 단계로'),
                   ),
@@ -203,8 +207,9 @@ class _CreateStoreMarkerScreenState extends State<CreateStoreMarkerScreen> {
                     onPressed: () {
                       if (_viewModel.step == MarkerCreationStep.confirmed) {
                         _viewModel.updateFineTuningCoordinates(
-                            _viewModel.finalCoordinates ??
-                                const NLatLng(37.5665, 126.9780));
+                          _viewModel.finalCoordinates ??
+                              const NLatLng(37.5665, 126.9780),
+                        );
                       } else if (_viewModel.step ==
                           MarkerCreationStep.fineTuning) {
                         _viewModel.resetToSearch();

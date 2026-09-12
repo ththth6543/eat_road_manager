@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/juso_address.dart';
 import '../../viewmodels/business_verification_viewmodel.dart';
 
@@ -29,59 +29,233 @@ class _AddressSearchViewState extends State<AddressSearchView> {
     super.dispose();
   }
 
+  void _handleSearch() {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      _viewModel.search(query);
+    }
+  }
+
   Widget _buildSearchUi() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(
+                  style: AppTypography.bodyLarge,
+                  decoration: InputDecoration(
                     hintText: '도로명, 건물명, 지번으로 검색',
-                    border: OutlineInputBorder(),
+                    hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
+                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.cancel_rounded, size: 18, color: AppColors.gray400),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.gray100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: AppSpacing.roundedMd,
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: AppSpacing.roundedMd,
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: AppSpacing.roundedMd,
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    ),
                   ),
-                  onSubmitted: (val) => _viewModel.search(val),
+                  textInputAction: TextInputAction.search,
+                  onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => _handleSearch(),
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () => _viewModel.search(_searchController.text),
-                child: const Text('검색'),
+              AppSpacing.gapW8,
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _handleSearch,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: AppSpacing.roundedMd),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    elevation: 0,
+                  ),
+                  child: const Text('검색', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
               ),
             ],
           ),
         ),
+        const Divider(height: 1, color: AppColors.borderLight),
         Expanded(
           child: ListenableBuilder(
             listenable: _viewModel,
             builder: (context, _) {
               if (_viewModel.isLoading) {
                 return const Center(
-                  child: CircularProgressIndicator(color: AppColors.accentBlue),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.primary),
+                      SizedBox(height: 14),
+                      Text('주소를 검색하는 중입니다...', style: TextStyle(color: AppColors.gray600, fontSize: 13)),
+                    ],
+                  ),
+                );
+              }
+
+              if (_viewModel.errorMessage != null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 44),
+                        const SizedBox(height: 12),
+                        Text(
+                          _viewModel.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: AppColors.gray800, fontSize: 14, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               }
 
               if (_viewModel.results.isEmpty) {
                 return Center(
-                  child: _viewModel.hasSearched
-                      ? const Text('검색 결과가 없습니다.')
-                      : const Text('주소를 검색하세요.'),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _viewModel.hasSearched ? Icons.search_off_rounded : Icons.location_on_outlined,
+                        size: 48,
+                        color: AppColors.gray400,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _viewModel.hasSearched ? '검색 결과가 없습니다.' : '도로명, 건물명 또는 지번을 입력하세요.',
+                        style: const TextStyle(color: AppColors.gray600, fontSize: 15),
+                      ),
+                      if (_viewModel.hasSearched) ...[
+                        const SizedBox(height: 4),
+                        const Text(
+                          '검색어의 철자가 정확한지 확인해 주세요.',
+                          style: TextStyle(color: AppColors.gray500, fontSize: 13),
+                        ),
+                      ],
+                    ],
+                  ),
                 );
               }
 
-              return ListView.builder(
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: _viewModel.results.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
                   final juso = _viewModel.results[index];
-                  return ListTile(
-                    title: Text(juso.roadAddr),
-                    subtitle: Text('[지번] ${juso.jibunAddr}'),
-                    onTap: () {
-                      _viewModel.selectJuso(juso);
-                    },
+                  return InkWell(
+                    onTap: () => _viewModel.selectJuso(juso),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      margin: const EdgeInsets.only(top: 1, right: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primarySubtle,
+                                        borderRadius: AppSpacing.roundedXs,
+                                        border: Border.all(color: AppColors.primary100),
+                                      ),
+                                      child: const Text(
+                                        '도로명',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primaryDark,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        juso.roadAddr,
+                                        style: AppTypography.titleSmall.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (juso.jibunAddr.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        margin: const EdgeInsets.only(top: 1, right: 8),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.gray100,
+                                          borderRadius: AppSpacing.roundedXs,
+                                        ),
+                                        child: const Text(
+                                          '지번',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.gray600,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          juso.jibunAddr,
+                                          style: AppTypography.bodySmall.copyWith(
+                                            color: AppColors.gray600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.gray400,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               );
@@ -93,40 +267,80 @@ class _AddressSearchViewState extends State<AddressSearchView> {
   }
 
   Widget _buildDetailUi(JusoAddress selectedJuso) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('기본 주소', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(selectedJuso.roadAddr,
-              style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primarySubtle,
+              borderRadius: AppSpacing.roundedMd,
+              border: Border.all(color: AppColors.primary100),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '선택된 주소',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  selectedJuso.roadAddr,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (selectedJuso.jibunAddr.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '[지번] ${selectedJuso.jibunAddr}',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.gray600),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          AppSpacing.gapH24,
+          Text('상세 주소 입력', style: AppTypography.titleSmall),
+          AppSpacing.gapH8,
           TextField(
             controller: _detailAddressController,
+            style: AppTypography.bodyLarge,
             decoration: const InputDecoration(
-              labelText: '상세 주소',
-              hintText: '상세 주소를 입력하세요 (예: 101동 101호)',
-              border: OutlineInputBorder(),
+              labelText: '동 / 호수 / 층 / 상세 위치',
+              hintText: '예: 101동 101호, 1층',
             ),
             autofocus: true,
           ),
-          const SizedBox(height: 24),
+          AppSpacing.gapH32,
           SizedBox(
             width: double.infinity,
+            height: 52,
             child: ElevatedButton(
               onPressed: () {
                 final addressData = selectedJuso.toJson();
-                addressData['detailAddr'] =
-                    _detailAddressController.text.trim();
-                debugPrint('건물번호: ${addressData.toString()}');
+                addressData['detailAddr'] = _detailAddressController.text.trim();
+                debugPrint('선택된 주소 데이터: ${addressData.toString()}');
                 Navigator.pop(context, addressData);
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: AppSpacing.roundedMd),
+                elevation: 0,
               ),
-              child: const Text('주소 입력 완료'),
+              child: const Text(
+                '주소 입력 완료',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -141,11 +355,15 @@ class _AddressSearchViewState extends State<AddressSearchView> {
       builder: (context, _) {
         final selectedJuso = _viewModel.selectedJuso;
         return Scaffold(
+          backgroundColor: AppColors.scaffoldBackground,
           appBar: AppBar(
-            title: Text(selectedJuso == null ? '주소 검색' : '상세 주소 입력'),
-            leading: selectedJuso != null
+            title: Text(
+              selectedJuso == null || selectedJuso.roadAddr.isEmpty ? '주소 검색' : '상세 주소 입력',
+              style: AppTypography.titleLarge,
+            ),
+            leading: selectedJuso != null && selectedJuso.roadAddr.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: () {
                       _viewModel.selectJuso(
                         JusoAddress(
